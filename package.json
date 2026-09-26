@@ -35,7 +35,7 @@
   ],
   "scripts": {
     "dev": "node src/cli.ts",
-    "build": "tsdown",
+    "build": "tsdown --publint",
     "typecheck": "tsc",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -47,7 +47,7 @@
     "check": "npm run lint && npm run typecheck && npm run format:check && npm test",
     "changeset": "changeset",
     "release": "npm run build && changeset publish",
-    "prepack": "npm run build",
+    "prepack": "tsdown",
     "prepare": "lefthook install",
     "screenshots": "node scripts/screenshot.ts",
     "fixtures:serve": "node scripts/fixture-server.ts"

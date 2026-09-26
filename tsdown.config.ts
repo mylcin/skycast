@@ -16,5 +16,7 @@ export default defineConfig({
   // Runtime libraries are devDependencies for that reason.
   deps: { onlyBundle: false },
   plugins: [thirdPartyLicenses('THIRD_PARTY_LICENSES.md')],
-  publint: true,
+  // publint packs the package itself, which fails inside `npm pack` or
+  // `npm publish` (prepack builds too). `npm run build` turns it on.
+  publint: false,
 });

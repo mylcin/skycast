@@ -50,9 +50,12 @@ export async function runCli(
       LANG: 'en_US.UTF-8',
       SKYCAST_CONFIG_DIR: join(home, 'config'),
       SKYCAST_CACHE_DIR: join(home, 'cache'),
+      // Windows Terminal: the same Unicode output as on Linux and macOS.
+      ...(process.platform === 'win32' && { WT_SESSION: 'skycast-test' }),
       ...options.env,
     },
-    platform: 'linux',
+    // The real platform: paths like C:\\… are only absolute on Windows.
+    platform: process.platform,
   };
   const code = await run(argv, io, {
     now: () => new Date('2026-09-26T21:30:00Z'),

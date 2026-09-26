@@ -17,7 +17,7 @@ import {
   uvLevel,
 } from './format.ts';
 import { placeShort } from './place.ts';
-import { fitLine, joinFitting, sideBySide } from './text.ts';
+import { fitLine, joinFitting, sideBySide, truncate } from './text.ts';
 
 /** Below this width the picture is left out. */
 const PICTURE_MIN_WIDTH = 56;
@@ -50,10 +50,21 @@ export function renderCurrent(
   const fit = (parts: string[]): string[] => joinFitting(parts, sep, room);
 
   const details: string[] = [
-    paint.bold(conditionText(current.weatherCode, t)),
-    `${paint.bold(temp(current.temperature, true))}  ${paint.dim(
-      t.weather.feelsLike(formatTemperature(current.feelsLike, units, symbols))
-    )}`,
+    paint.bold(
+      truncate(conditionText(current.weatherCode, t), room, symbols.ellipsis)
+    ),
+    ...joinFitting(
+      [
+        paint.bold(temp(current.temperature, true)),
+        paint.dim(
+          t.weather.feelsLike(
+            formatTemperature(current.feelsLike, units, symbols)
+          )
+        ),
+      ],
+      '  ',
+      room
+    ),
   ];
 
   const wind = formatWind(
@@ -80,9 +91,11 @@ export function renderCurrent(
   ];
   // UV 0 at night is noise.
   if (current.uvIndex !== null && (current.isDay || current.uvIndex >= 0.5)) {
-    const level = uvLevel(current.uvIndex);
+    // Classify the number people see: 5.6 shows as 6, which is "high".
+    const uv = Math.round(current.uvIndex);
+    const level = uvLevel(uv);
     extras.push(
-      `${paint.dim(t.weather.uv)} ${paint.uv(level, `${Math.round(current.uvIndex)} ${t.uv[level]}`)}`
+      `${paint.dim(t.weather.uv)} ${paint.uv(level, `${uv} ${t.uv[level]}`)}`
     );
   }
   details.push(...fit(extras));
@@ -117,8 +130,8 @@ export function renderCurrent(
     if (today.sunrise && today.sunset) {
       details.push(
         ...fit([
-          `${paint.dim(t.weather.sunrise)} ${formatTime(today.sunrise)}`,
-          `${paint.dim(t.weather.sunset)} ${formatTime(today.sunset)}`,
+          `${paint.dim(t.weather.sunrise)} ${formatTime(today.sunrise, today.date)}`,
+          `${paint.dim(t.weather.sunset)} ${formatTime(today.sunset, today.date)}`,
         ])
       );
     } else if (today.daylightSeconds !== null) {
@@ -164,7 +177,14 @@ export function renderCurrentCompact(
   return (
     fitLine(
       [
-        paint.bold(placeShort(report.location, t, symbols)),
+        // The place gives way before the temperature does.
+        paint.bold(
+          truncate(
+            placeShort(report.location, t, symbols),
+            Math.max(8, ctx.width - 8),
+            symbols.ellipsis
+          )
+        ),
         paint.temperature(
           current.temperature,
           units,

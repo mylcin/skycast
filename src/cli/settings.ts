@@ -5,7 +5,8 @@ import type { Io } from './io.ts';
 
 /** The user's locale as BCP 47 ("tr-TR"), from the environment or Intl. */
 export function systemLocale(env: Io['env']): string | undefined {
-  const raw = env.LC_ALL ?? env.LC_MESSAGES ?? env.LANG;
+  // Empty values count as unset, as in POSIX.
+  const raw = env.LC_ALL || env.LC_MESSAGES || env.LANG;
   // POSIX locales look like "tr_TR.UTF-8"; "C" and "POSIX" say nothing.
   const posix = raw?.split('.')[0]?.replace('_', '-');
   if (posix && posix !== 'C' && posix !== 'POSIX') return posix;
@@ -35,13 +36,25 @@ function langOf(locale: string | undefined): Lang {
  * chosen language, so it has to be known first.
  */
 export function scanLang(argv: readonly string[]): string | undefined {
+  let found: string | undefined;
   for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    if (arg === '--') return undefined;
-    if (arg === '--lang' || arg === '-l') return argv[i + 1];
-    if (arg?.startsWith('--lang=')) return arg.slice('--lang='.length);
+    const arg = argv[i] ?? '';
+    if (arg === '--') break;
+    if (arg === '--lang') found = argv[i + 1];
+    else if (arg.startsWith('--lang=')) found = arg.slice('--lang='.length);
+    else if (/^-[a-zA-Z]*l/.test(arg) && !arg.startsWith('--')) {
+      // -l tr, -ltr, -cl tr: short flags can be bundled, the value follows l.
+      const rest = arg.slice(arg.indexOf('l') + 1);
+      found = rest || argv[i + 1];
+    }
   }
-  return undefined;
+  return found;
+}
+
+/** Arguments before `--`, where options can appear. */
+export function optionArgs(argv: readonly string[]): readonly string[] {
+  const end = argv.indexOf('--');
+  return end === -1 ? argv : argv.slice(0, end);
 }
 
 export interface SettingSources<T> {

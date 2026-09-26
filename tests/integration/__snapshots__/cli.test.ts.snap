@@ -5,7 +5,7 @@ exports[`shell completion > bash: prints a script that knows the commands 1`] = 
 # Load it in ~/.bashrc:  eval "$(skycast completion bash)"
 _skycast() {
   local cur="\${COMP_WORDS[COMP_CWORD]}" prev="\${COMP_WORDS[COMP_CWORD-1]}"
-  local path="" skip=0 i word next words
+  local path="" skip=0 args=0 i word next words="" choices=""
   for ((i = 1; i < COMP_CWORD; i++)); do
     word="\${COMP_WORDS[i]}"
     if ((skip)); then skip=0; continue; fi
@@ -15,7 +15,8 @@ _skycast() {
       *)
         next="\${path:+$path }$word"
         case "$next" in
-          now|current|forecast|hourly|compare|config|config\\ list|config\\ ls|config\\ get|config\\ set|config\\ unset|config\\ reset|config\\ path|fav|fav\\ add|fav\\ remove|fav\\ rm|fav\\ list|fav\\ ls|favorites|favorites\\ add|favorites\\ remove|favorites\\ rm|favorites\\ list|favorites\\ ls|cache|cache\\ clear|cache\\ path|completion) path="$next" ;;
+          now|current|forecast|hourly|compare|config|config\\ list|config\\ ls|config\\ get|config\\ set|config\\ unset|config\\ reset|config\\ path|fav|fav\\ add|fav\\ remove|fav\\ rm|fav\\ list|fav\\ ls|favorites|favorites\\ add|favorites\\ remove|favorites\\ rm|favorites\\ list|favorites\\ ls|cache|cache\\ clear|cache\\ path|completion) path="$next" args=0 ;;
+          *) args=$((args + 1)) ;;
         esac
         ;;
     esac
@@ -35,9 +36,9 @@ _skycast() {
     "config") words="list ls get set unset reset path --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
     "config list") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
     "config ls") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
-    "config get") words="city units lang --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
-    "config set") words="city units lang --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
-    "config unset") words="city units lang --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "config get") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" choices="city units lang" ;;
+    "config set") words="--country --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" choices="city units lang" ;;
+    "config unset") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" choices="city units lang" ;;
     "config reset") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
     "config path") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
     "fav") words="add remove rm list ls --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
@@ -55,8 +56,9 @@ _skycast() {
     "cache") words="clear path --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
     "cache clear") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
     "cache path") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
-    "completion") words="bash zsh fish --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "completion") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" choices="bash zsh fish" ;;
   esac
+  if ((args == 0)); then words="$words $choices"; fi
   COMPREPLY=($(compgen -W "$words" -- "$cur"))
 }
 complete -F _skycast skycast
@@ -116,11 +118,12 @@ complete -c skycast -n '__fish_seen_subcommand_from config' -s h -l help -d 'sho
 complete -c skycast -n '__fish_seen_subcommand_from list' -s h -l help -d 'show help'
 complete -c skycast -n '__fish_seen_subcommand_from ls' -s h -l help -d 'show help'
 complete -c skycast -n '__fish_seen_subcommand_from get' -s h -l help -d 'show help'
-complete -c skycast -n '__fish_seen_subcommand_from get' -a 'city units lang'
+complete -c skycast -n '__fish_seen_subcommand_from get; and test (count (commandline -opc)) -eq 3' -a 'city units lang'
+complete -c skycast -n '__fish_seen_subcommand_from set' -l country -x -d 'only places in this country (ISO code, e.g. TR)'
 complete -c skycast -n '__fish_seen_subcommand_from set' -s h -l help -d 'show help'
-complete -c skycast -n '__fish_seen_subcommand_from set' -a 'city units lang'
+complete -c skycast -n '__fish_seen_subcommand_from set; and test (count (commandline -opc)) -eq 3' -a 'city units lang'
 complete -c skycast -n '__fish_seen_subcommand_from unset' -s h -l help -d 'show help'
-complete -c skycast -n '__fish_seen_subcommand_from unset' -a 'city units lang'
+complete -c skycast -n '__fish_seen_subcommand_from unset; and test (count (commandline -opc)) -eq 3' -a 'city units lang'
 complete -c skycast -n '__fish_seen_subcommand_from reset' -s h -l help -d 'show help'
 complete -c skycast -n '__fish_seen_subcommand_from path' -s h -l help -d 'show help'
 complete -c skycast -n '__fish_seen_subcommand_from fav; and not __fish_seen_subcommand_from add remove rm list ls' -a add -d 'add a favourite'
@@ -153,7 +156,7 @@ complete -c skycast -n '__fish_seen_subcommand_from cache' -s h -l help -d 'show
 complete -c skycast -n '__fish_seen_subcommand_from clear' -s h -l help -d 'show help'
 complete -c skycast -n '__fish_seen_subcommand_from path' -s h -l help -d 'show help'
 complete -c skycast -n '__fish_seen_subcommand_from completion' -s h -l help -d 'show help'
-complete -c skycast -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish'
+complete -c skycast -n '__fish_seen_subcommand_from completion; and test (count (commandline -opc)) -eq 2' -a 'bash zsh fish'
 "
 `;
 
@@ -197,7 +200,7 @@ _skycast() {
                   _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '1: :(city units lang)'
                   ;;
                 set)
-                  _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '1: :(city units lang)'
+                  _arguments '--country[only places in this country (ISO code, e.g. TR)]:country: ' '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '1: :(city units lang)'
                   ;;
                 unset)
                   _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '1: :(city units lang)'

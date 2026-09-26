@@ -1,9 +1,10 @@
 import { InvalidResponseError } from '../../core/errors.ts';
-import type { Forecast } from '../../core/models.ts';
+import type { Coordinates, Forecast, Freshness } from '../../core/models.ts';
 import type { HttpClient } from '../../infra/http.ts';
 import type { ForecastRequest, WeatherProvider } from '../types.ts';
 import { toForecast } from './mappers.ts';
 import {
+  type ForecastPoint,
   CURRENT_VARIABLES,
   DAILY_VARIABLES,
   forecastResponse,
@@ -21,6 +22,26 @@ const parse = parser(forecastResponse);
 const coordinate = (value: number): string => String(Number(value.toFixed(4)));
 
 const MAX_HOURS = 384;
+const MAX_DAYS = 16;
+/** Points per request: about 2,200 characters of coordinates. */
+const BATCH = 50;
+
+/** One answer's freshness for several batches: as old and as stale as the worst. */
+function mergeFreshness(all: readonly Freshness[]): Freshness {
+  const [first, ...rest] = all;
+  if (!first) return { fetchedAt: new Date(), cached: false, stale: false };
+  return rest.reduce<Freshness>((merged, next) => {
+    const stale = merged.stale || next.stale;
+    const staleBecause = merged.staleBecause ?? next.staleBecause;
+    return {
+      fetchedAt:
+        next.fetchedAt < merged.fetchedAt ? next.fetchedAt : merged.fetchedAt,
+      cached: merged.cached && next.cached,
+      stale,
+      ...(stale && staleBecause && { staleBecause }),
+    };
+  }, first);
+}
 
 export interface OpenMeteoWeatherOptions {
   readonly http: HttpClient;
@@ -65,6 +86,45 @@ export function createOpenMeteoWeather({
   url = FORECAST_URL,
   now = () => new Date(),
 }: OpenMeteoWeatherOptions): WeatherProvider {
+  async function fetchBatch(
+    points: readonly Coordinates[],
+    request: ForecastRequest,
+    signal?: AbortSignal
+  ): Promise<{ data: ForecastPoint[]; freshness: Freshness }> {
+    const query = new URL(url);
+    const params = query.searchParams;
+    // Several points go in one request; the API answers with an array.
+    params.set('latitude', points.map(p => coordinate(p.latitude)).join(','));
+    params.set('longitude', points.map(p => coordinate(p.longitude)).join(','));
+    if (request.current) params.set('current', CURRENT_VARIABLES.join(','));
+    params.set('daily', DAILY_VARIABLES.join(','));
+    // A spare day and hour: fromNow() trims what is already past, and a
+    // cached answer read just after midnight still has a full window.
+    params.set('forecast_days', String(Math.min(request.days + 1, MAX_DAYS)));
+    if (request.hours > 0) {
+      params.set('hourly', HOURLY_VARIABLES.join(','));
+      params.set(
+        'forecast_hours',
+        String(Math.min(request.hours + 1, MAX_HOURS))
+      );
+    }
+    // Without it, days and times are in GMT.
+    params.set('timezone', 'auto');
+
+    const { data, freshness } = await http.getJson(query, {
+      parse,
+      cache: CACHE,
+      ...(signal && { signal }),
+    });
+    if (data.length !== points.length) {
+      throw new InvalidResponseError(
+        query.host,
+        `expected ${points.length} forecasts, got ${data.length}`
+      );
+    }
+    return { data, freshness };
+  }
+
   return {
     id: 'open-meteo',
     attribution: {
@@ -72,46 +132,23 @@ export function createOpenMeteoWeather({
       url: 'https://open-meteo.com/',
       license: 'CC BY 4.0',
     },
-    maxDays: 16,
+    maxDays: MAX_DAYS,
     maxHours: MAX_HOURS,
     async forecast(points, request, signal) {
-      const query = new URL(url);
-      const params = query.searchParams;
-      // Several points go in one request; the API answers with an array.
-      params.set('latitude', points.map(p => coordinate(p.latitude)).join(','));
-      params.set(
-        'longitude',
-        points.map(p => coordinate(p.longitude)).join(',')
+      // Long lists are split so the URL stays well under server limits.
+      const batches: (typeof points)[] = [];
+      for (let i = 0; i < points.length; i += BATCH) {
+        batches.push(points.slice(i, i + BATCH));
+      }
+      const answers = await Promise.all(
+        batches.map(batch => fetchBatch(batch, request, signal))
       );
-      if (request.current) params.set('current', CURRENT_VARIABLES.join(','));
-      params.set('daily', DAILY_VARIABLES.join(','));
-      params.set('forecast_days', String(request.days));
-      if (request.hours > 0) {
-        params.set('hourly', HOURLY_VARIABLES.join(','));
-        // One spare hour covers the early start trimmed by fromNow().
-        params.set(
-          'forecast_hours',
-          String(Math.min(request.hours + 1, MAX_HOURS))
-        );
-      }
-      // Without it, days and times are in GMT.
-      params.set('timezone', 'auto');
-
-      const { data, freshness } = await http.getJson(query, {
-        parse,
-        cache: CACHE,
-        ...(signal && { signal }),
-      });
-      if (data.length !== points.length) {
-        throw new InvalidResponseError(
-          query.host,
-          `expected ${points.length} forecasts, got ${data.length}`
-        );
-      }
       const at = now();
       return {
-        forecasts: data.map(point => fromNow(toForecast(point), request, at)),
-        freshness,
+        forecasts: answers.flatMap(answer =>
+          answer.data.map(point => fromNow(toForecast(point), request, at))
+        ),
+        freshness: mergeFreshness(answers.map(answer => answer.freshness)),
       };
     },
   };

@@ -86,6 +86,7 @@ export const tr: Messages = {
     clouds: 'Bulut',
     todayRange: (low, high) => `Bugün ${low} ile ${high} arası`,
     chanceOfRain: value => `yağış ${value}`,
+    noData: 'Bu dönem için henüz veri yok.',
   },
 
   forecast: {
@@ -102,6 +103,7 @@ export const tr: Messages = {
 
   hourly: {
     title: hours => `Önümüzdeki ${hours} saat`,
+    day: 'Gün',
     time: 'Saat',
     temperature: 'Sıcaklık',
     rain: 'Yağış',
@@ -185,8 +187,22 @@ export const tr: Messages = {
 
     fetching: 'Hava durumu alınıyor…',
     choosePlace: query => `Hangi “${query}”?`,
-    bestGuess: (place, query) =>
-      `${place} gösteriliyor. “${query}” adında başka yerler de var: ülkeyi ekleyin (“${query}, US”) ya da --country kullanın.`,
+    bestGuess: (place, query, example) =>
+      `${place} gösteriliyor. “${query}” adında başka yerler de var: “${example}” gibi bir ülke ya da bölge ekleyin.`,
+    orUseCountry: 'Ya da --country kullanın.',
+    invalidEnvUrl: (variable, value) =>
+      `${variable} şifre içermeyen tam bir http(s) adresi olmalı; “${value}” değil.`,
+    staleService: (time, age) =>
+      `Hava durumu servisi yanıt vermiyor: ${time} verisi gösteriliyor (${age}).`,
+    argumentNames: {
+      command: 'komut',
+      place: 'yer adı',
+      places: 'yer adları',
+      shell: 'kabuk',
+      key: 'ayar adı',
+      value: 'değer',
+      favorite: 'favori',
+    },
     staleData: (time, age) =>
       `Çevrimdışı: ${time} verisi gösteriliyor (${age}).`,
     minutesAgo: minutes => `${minutes} dakika önce`,
@@ -222,8 +238,18 @@ export const tr: Messages = {
         'Hava durumu servisine çok fazla istek gönderildi. Bir dakika bekleyip yeniden deneyin.',
       invalidResponse:
         'Hava durumu servisi skycast’in anlamadığı bir yanıt gönderdi. Daha sonra yeniden deneyin.',
-      config: (path, detail) =>
-        `${path} ayar dosyası geçerli değil (${detail}). Dosyayı düzeltin ya da “skycast config reset” ile sıfırlayın.`,
+      configInvalidJson: path =>
+        `${path} ayar dosyası geçerli bir JSON değil. Dosyayı düzeltin ya da “skycast config reset” çalıştırın; eski dosya yedek olarak saklanır.`,
+      configInvalidValue: (path, key) =>
+        `${path} içindeki “${key}” ayarı geçerli değil. “skycast config set” ile değiştirin ya da “skycast config reset” çalıştırın; favoriler korunur.`,
+      configUnreadable: (path, code) =>
+        `skycast ${path} dosyasını okuyamıyor (${code}). Dosya izinlerini kontrol edin.`,
+      configNotAFile: path =>
+        `${path} bir dosya olmalı ama bir klasör. Başka bir yere taşıyın.`,
+      storage: (path, reason) =>
+        `skycast ${path} dosyasına yazamadı (${reason}). Klasörün var olduğunu ve yazılabilir olduğunu kontrol edin.`,
+      notFoundQualified: query =>
+        `“${query}” adında bir yer bulunamadı. Yazımı kontrol edin.`,
       internal: message => `Bir şeyler ters gitti: ${message}`,
       verboseHint:
         'Ayrıntılar için --verbose ile yeniden çalıştırın ve lütfen bildirin: https://github.com/mylcin/weather-cli/issues',
@@ -241,9 +267,14 @@ export const tr: Messages = {
       keys: { city: 'city', units: 'units', lang: 'lang' },
       notSet: 'ayarlanmadı',
       automatic: value => `${value} (otomatik)`,
+      fromEnv: (value, variable) => `${value} (${variable} değişkeninden)`,
       saved: (key, value) => `${key} artık ${value}.`,
       cleared: key => `${key} varsayılana döndü.`,
-      reset: 'Tüm ayarlar varsayılana döndü.',
+      reset: favorites =>
+        favorites === 0
+          ? 'Ayarlar varsayılana döndü.'
+          : `Ayarlar varsayılana döndü; ${favorites} favori korundu.`,
+      resetBackup: path => `Ayarlar varsayılana döndü. Eski dosya: ${path}`,
       unknownKey: (key, keys) =>
         `“${key}” adında bir ayar yok. Ayarlar: ${keys}.`,
       invalidValue: (key, value, allowed) =>

@@ -105,8 +105,10 @@ export interface Freshness {
   readonly fetchedAt: Date;
   /** Served from the disk cache. */
   readonly cached: boolean;
-  /** Served from an expired cache entry because the network failed. */
+  /** Served from an expired cache entry because a request failed. */
   readonly stale: boolean;
+  /** Why stale data was used: no connection, or the service failing. */
+  readonly staleBecause?: 'offline' | 'unavailable';
 }
 
 /** A forecast for a resolved location, in the requested units. */

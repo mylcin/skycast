@@ -107,7 +107,8 @@ describe('forecast', () => {
     expect(params!.get('latitude')).toBe('41.0138');
     expect(params!.get('longitude')).toBe('28.9497');
     expect(params!.get('timezone')).toBe('auto');
-    expect(params!.get('forecast_days')).toBe('7');
+    // A spare day, trimmed again after parsing.
+    expect(params!.get('forecast_days')).toBe('8');
     // One spare hour for zones where the API starts an hour early.
     expect(params!.get('forecast_hours')).toBe('49');
     expect(params!.get('current')?.split(',')).toContain(

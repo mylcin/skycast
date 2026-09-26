@@ -2,6 +2,7 @@ import type { SkycastError } from '../core/errors.ts';
 import {
   CancelledError,
   ConfigError,
+  StorageError,
   InvalidResponseError,
   LocationNotFoundError,
   NetworkError,
@@ -34,7 +35,10 @@ export function describeError(error: unknown, t: Messages): Failure {
   });
 
   if (error instanceof LocationNotFoundError) {
-    return known(e.notFound(error.query), error);
+    const message = error.qualified
+      ? e.notFoundQualified(error.query)
+      : e.notFound(error.query);
+    return known(message, error);
   }
   if (error instanceof TimeoutError) return known(e.timeout(error.host), error);
   if (error instanceof NetworkError) return known(e.network(error.host), error);
@@ -46,7 +50,16 @@ export function describeError(error: unknown, t: Messages): Failure {
     return known(e.upstream(error.status, error.reason ?? error.host), error);
   }
   if (error instanceof ConfigError) {
-    return known(e.config(error.path, error.detail), error);
+    const message = {
+      'invalid-json': () => e.configInvalidJson(error.path),
+      'invalid-value': () => e.configInvalidValue(error.path, error.detail),
+      unreadable: () => e.configUnreadable(error.path, error.detail),
+      'not-a-file': () => e.configNotAFile(error.path),
+    }[error.problem]();
+    return known(message, error);
+  }
+  if (error instanceof StorageError) {
+    return known(e.storage(error.path, error.reason), error);
   }
   if (error instanceof UsageError || error instanceof CancelledError) {
     return known(error.message === 'Cancelled' ? '' : error.message, error);
@@ -92,7 +105,10 @@ export function translateCommanderError(message: string, t: Messages): string {
   const patterns: readonly Pattern[] = [
     [/^unknown option '(.+)'$/, option => e.unknownOption(option)],
     [/^unknown command '(.+)'$/, command => e.unknownCommand(command)],
-    [/^missing required argument '(.+)'$/, name => e.missingArgument(name)],
+    [
+      /^missing required argument '(.+)'$/,
+      name => e.missingArgument(t.cli.argumentNames[name] ?? name),
+    ],
     [
       /^option '(.+)' argument missing$/,
       option => e.optionMissingValue(option),

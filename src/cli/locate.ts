@@ -1,5 +1,5 @@
 import { UsageError } from '../core/errors.ts';
-import { coordinateLocation } from '../core/location.ts';
+import { coordinateLocation, splitQuery } from '../core/location.ts';
 import type { Location } from '../core/models.ts';
 import { placeTitle } from '../renderers/place.ts';
 import type { Session } from './session.ts';
@@ -14,7 +14,16 @@ export interface PlaceInput {
 
 /** Joins "New York" typed as two words, and "Paris," "France". */
 export function queryOf(words: readonly string[]): string {
-  return words.join(' ').replace(/\s+/g, ' ').trim();
+  return words
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .replace(/^[\s,]+|[\s,]+$/g, '');
+}
+
+export interface ResolveInput {
+  readonly country?: string | undefined;
+  /** Whether the command has --country, so the hint may suggest it. */
+  readonly countryFlag: boolean;
 }
 
 /**
@@ -24,7 +33,7 @@ export function queryOf(words: readonly string[]): string {
 export async function resolvePlace(
   session: Session,
   query: string,
-  country?: string
+  { country, countryFlag }: ResolveInput
 ): Promise<Location> {
   const { t, render } = session;
   const resolution = await session.services.locations.resolve(query, {
@@ -33,10 +42,18 @@ export async function resolvePlace(
     ...(session.choose && { choose: session.choose }),
     ...(session.signal && { signal: session.signal }),
   });
-  if (resolution.how === 'best' && resolution.alternatives.length > 0) {
-    session.notice(
-      t.cli.bestGuess(placeTitle(resolution.location, t, render.symbols), query)
+  const [other] = resolution.alternatives;
+  if (resolution.how === 'best' && other) {
+    // Suggest a real namesake: "Paris, Texas" rather than a made-up one.
+    const { name } = splitQuery(query);
+    const where = other.region ?? other.countryCode ?? other.country;
+    const example = where ? `${name}, ${where}` : name;
+    const hint = t.cli.bestGuess(
+      placeTitle(resolution.location, t, render.symbols),
+      name,
+      example
     );
+    session.notice(countryFlag ? `${hint} ${t.cli.orUseCountry}` : hint);
   }
   return resolution.location;
 }
@@ -59,7 +76,12 @@ export async function locate(
     if (query) throw new UsageError(t.cli.cityOrCoordinates);
     return coordinateLocation(input.lat, input.lon);
   }
-  if (query) return resolvePlace(session, query, input.country);
+  if (query) {
+    return resolvePlace(session, query, {
+      country: input.country,
+      countryFlag: true,
+    });
+  }
   const saved = fallback?.();
   if (saved) return saved;
   throw new UsageError(t.cli.noCity);

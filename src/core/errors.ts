@@ -19,6 +19,7 @@ export type ExitCode = (typeof ExitCode)[keyof typeof ExitCode];
 export type ErrorCode =
   | 'USAGE'
   | 'CONFIG'
+  | 'STORAGE'
   | 'LOCATION_NOT_FOUND'
   | 'NETWORK'
   | 'TIMEOUT'
@@ -43,18 +44,51 @@ export class UsageError extends SkycastError {
   readonly exitCode = ExitCode.usage;
 }
 
-/** The config file exists but can't be read or doesn't validate. */
+/**
+ * What is wrong with the settings file: not JSON, a value that doesn't
+ * validate (`detail` names it), a file that can't be read (`detail` is the
+ * OS error code), or something that isn't a file at all.
+ */
+export type ConfigProblem =
+  'invalid-json' | 'invalid-value' | 'unreadable' | 'not-a-file';
+
 export class ConfigError extends SkycastError {
   readonly code = 'CONFIG';
   readonly exitCode = ExitCode.internal;
 
   readonly path: string;
+  readonly problem: ConfigProblem;
   readonly detail: string;
 
-  constructor(path: string, detail: string, options?: ErrorOptions) {
-    super(`Invalid config file ${path}: ${detail}`, options);
+  constructor(
+    path: string,
+    problem: ConfigProblem,
+    detail = '',
+    options?: ErrorOptions
+  ) {
+    super(
+      `Config file ${path}: ${problem}${detail ? ` (${detail})` : ''}`,
+      options
+    );
     this.path = path;
+    this.problem = problem;
     this.detail = detail;
+  }
+}
+
+/** Settings or cache could not be written: permissions, a full disk, a lock. */
+export class StorageError extends SkycastError {
+  readonly code = 'STORAGE';
+  readonly exitCode = ExitCode.internal;
+
+  readonly path: string;
+  /** The OS error code, such as EACCES, or EBUSY for a held lock. */
+  readonly reason: string;
+
+  constructor(path: string, reason: string, options?: ErrorOptions) {
+    super(`Could not write ${path} (${reason})`, options);
+    this.path = path;
+    this.reason = reason;
   }
 }
 
@@ -63,10 +97,13 @@ export class LocationNotFoundError extends SkycastError {
   readonly exitCode = ExitCode.notFound;
 
   readonly query: string;
+  /** The query already named a country or region, so don't suggest adding one. */
+  readonly qualified: boolean;
 
-  constructor(query: string) {
+  constructor(query: string, qualified = false) {
     super(`No place found for "${query}"`);
     this.query = query;
+    this.qualified = qualified;
   }
 }
 

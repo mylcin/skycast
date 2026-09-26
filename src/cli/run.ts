@@ -4,7 +4,12 @@ import {
 } from '@commander-js/extra-typings';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { ConfigError, ExitCode, UsageError } from '../core/errors.ts';
+import {
+  ConfigError,
+  ExitCode,
+  LocationNotFoundError,
+  UsageError,
+} from '../core/errors.ts';
 import { getMessages, type Messages } from '../i18n/index.ts';
 import {
   createConfigStore,
@@ -13,17 +18,19 @@ import {
 } from '../infra/config-store.ts';
 import { createFileCache } from '../infra/file-cache.ts';
 import { resolvePaths } from '../infra/paths.ts';
+import { renderJson } from '../renderers/json.ts';
 import { createPaint } from '../renderers/paint.ts';
 import * as configCommands from './commands/config.ts';
 import * as favorites from './commands/favorites.ts';
 import { home } from './commands/home.ts';
 import * as weather from './commands/weather.ts';
+import { editDistance } from '../utils/edit-distance.ts';
 import { completionScript } from './completion.ts';
 import { describeError, translateCommanderError } from './errors.ts';
 import type { Hooks, Io } from './io.ts';
 import { buildProgram, type Actions } from './program.ts';
 import { createSession, type GlobalOptions, type Session } from './session.ts';
-import { resolveLang, scanLang } from './settings.ts';
+import { optionArgs, resolveLang, scanLang } from './settings.ts';
 import { colorLevel } from './terminal.ts';
 
 export type { Hooks, Io } from './io.ts';
@@ -47,24 +54,6 @@ function globalsOf(command: CommandUnknownOpts): GlobalOptions {
   };
 }
 
-function distance(a: string, b: string): number {
-  const row = Array.from({ length: b.length + 1 }, (_, i) => i);
-  for (let i = 1; i <= a.length; i++) {
-    let previous = row[0] ?? 0;
-    row[0] = i;
-    for (let j = 1; j <= b.length; j++) {
-      const current = row[j] ?? 0;
-      row[j] = Math.min(
-        current + 1,
-        (row[j - 1] ?? 0) + 1,
-        previous + (a[i - 1] === b[j - 1] ? 0 : 1)
-      );
-      previous = current;
-    }
-  }
-  return row[b.length] ?? 0;
-}
-
 /**
  * `skycast Istanbul` is short for `skycast now Istanbul`, so a mistyped
  * command would be looked up as a place. Catch the obvious typos first.
@@ -80,7 +69,7 @@ function checkTypo(
   const allowed = lower.length <= 5 ? 1 : 2;
   for (const command of program.commands) {
     for (const name of [command.name(), ...command.aliases()]) {
-      if (distance(lower, name) <= allowed) {
+      if (editDistance(lower, name) <= allowed) {
         throw new UsageError(t.cli.didYouMean(name));
       }
     }
@@ -96,17 +85,18 @@ export async function run(
   io: Io,
   hooks: Hooks = {}
 ): Promise<number> {
+  const options = optionArgs(argv);
   const early = {
-    json: argv.includes('--json'),
-    color: !argv.includes('--no-color'),
-    verbose: argv.includes('--verbose'),
+    json: options.includes('--json'),
+    color: !options.includes('--no-color'),
+    verbose: options.includes('--verbose'),
   };
   const errPaint = createPaint(colorLevel(io.stderr, io.env, early.color));
   const paths = resolvePaths(io.env, io.platform, hooks.homedir ?? homedir());
   const store = createConfigStore(join(paths.config, 'config.json'));
   const fileCache = createFileCache(join(paths.cache, 'http'), hooks.now);
 
-  // A broken config file must not stop `config reset`, help or completion,
+  // A broken settings file must not stop `config reset`, help or completion,
   // so the error is kept and raised only by commands that read settings.
   let config: Config = EMPTY_CONFIG;
   let configError: ConfigError | undefined;
@@ -126,37 +116,65 @@ export async function run(
   );
   let exitCode: number = ExitCode.ok;
 
-  const session = (command: CommandUnknownOpts): Session => {
-    const { units, lang } = settings();
+  const session = (
+    command: CommandUnknownOpts,
+    saved: Config = settings()
+  ): Session => {
     const created = createSession({
       io,
       hooks,
       options: globalsOf(command),
-      saved: { units, lang },
+      saved: { units: saved.units, lang: saved.lang },
       cache: fileCache,
     });
     t = created.t;
     return created;
   };
   const defaultCity = () => config.city;
-  const configCommand = (command: CommandUnknownOpts) => ({
-    session: session(command),
-    store,
-    config: settings(),
-    env: io.env,
-  });
+  /**
+   * Settings commands work from whatever still validates, so a bad value
+   * can be fixed with `config set` instead of only by editing the file.
+   */
+  const configCommand = async (command: CommandUnknownOpts) => {
+    const { config: salvaged } = await store.salvage();
+    return {
+      session: session(command, salvaged),
+      store,
+      config: salvaged,
+      env: io.env,
+    };
+  };
+  const print = (
+    command: CommandUnknownOpts,
+    json: object,
+    text: string
+  ): void => {
+    io.stdout.write(
+      globalsOf(command).json ? renderJson(json as never) : `${text}\n`
+    );
+  };
 
   const actions: Actions = {
     async home(words, command) {
       if (words.length > 0) {
-        checkTypo(words, command, t);
-        await weather.now(session(command), { words });
+        try {
+          await weather.now(session(command), { words });
+        } catch (error) {
+          // Only a word that isn't a place can be a mistyped command.
+          if (error instanceof LocationNotFoundError)
+            checkTypo(words, command, t);
+          throw error;
+        }
         return;
       }
-      if (!(await home(session(command), settings()))) {
-        io.stdout.write(`${t.cli.home.empty}\n\n`);
-        command.outputHelp();
+      const current = session(command);
+      if (await home(current, settings())) return;
+      if (current.json) {
+        io.stdout.write(renderJson({ city: null, favorites: [] }));
+        return;
       }
+      io.stdout.write(`${t.cli.home.empty}\n\n`);
+      command.outputHelp();
     },
     now: (words, flags, command) =>
       weather.now(session(command), { words, ...flags }, defaultCity),
@@ -171,43 +189,71 @@ export async function run(
       io.stdout.write(completionScript(shell, command.parent ?? command));
     },
     config: {
-      list: command => {
-        configCommands.list(configCommand(command));
+      async list(command) {
+        configCommands.list(await configCommand(command));
       },
-      get: (key, command) => {
-        configCommands.get(configCommand(command), key);
+      async get(key, command) {
+        configCommands.get(await configCommand(command), key);
       },
-      set: (key, value, command) =>
-        configCommands.set(configCommand(command), key, value),
-      unset: (key, command) =>
-        configCommands.unset(configCommand(command), key),
-      async reset() {
-        // Works on a broken file too: that is what it is for. Favourites
-        // survive a reset when the file could still be read.
-        if (configError) await store.remove();
-        else await store.save({ favorites: config.favorites });
-        io.stdout.write(`${t.cli.config.reset}\n`);
+      async set(key, value, flags, command) {
+        await configCommands.set(
+          await configCommand(command),
+          key,
+          value,
+          flags.country
+        );
       },
-      path() {
-        io.stdout.write(`${store.path}\n`);
+      async unset(key, command) {
+        await configCommands.unset(await configCommand(command), key);
+      },
+      async reset(command) {
+        // Works on a broken file too: that is what it is for.
+        const result = await store.reset();
+        print(
+          command,
+          { reset: true, ...result },
+          result.backup
+            ? t.cli.config.resetBackup(result.backup)
+            : t.cli.config.reset(result.favorites)
+        );
+      },
+      path(command) {
+        print(command, { path: store.path }, store.path);
       },
     },
     favorites: {
-      add: (words, flags, command) =>
-        favorites.add(configCommand(command), words, flags.country),
-      remove: (ref, command) => favorites.remove(configCommand(command), ref),
-      list: command => {
-        favorites.list(configCommand(command));
+      async add(words, flags, command) {
+        await favorites.add(await configCommand(command), words, flags.country);
+      },
+      async remove(ref, command) {
+        await favorites.remove(await configCommand(command), ref);
+      },
+      async list(command) {
+        favorites.list({ ...(await configCommand(command)) });
       },
     },
     cache: {
-      async clear() {
-        io.stdout.write(`${t.cli.cacheCleared(await fileCache.clear())}\n`);
+      async clear(command) {
+        const count = await fileCache.clear();
+        print(command, { cleared: count }, t.cli.cacheCleared(count));
       },
-      path() {
-        io.stdout.write(`${fileCache.directory}\n`);
+      path(command) {
+        print(command, { path: fileCache.directory }, fileCache.directory);
       },
     },
+  };
+
+  // Set from callbacks, so an object: TypeScript would narrow a plain `let`.
+  const errors = { reported: false };
+  const report = (code: string, message: string, exit: number): void => {
+    errors.reported = true;
+    if (early.json) {
+      io.stderr.write(
+        `${JSON.stringify({ error: { code, message, exitCode: exit } })}\n`
+      );
+    } else {
+      io.stderr.write(`${errPaint.error('skycast:')} ${message}\n`);
+    }
   };
 
   const program = buildProgram({
@@ -215,11 +261,13 @@ export async function run(
     actions,
     output: {
       writeOut: text => io.stdout.write(text),
-      writeErr: text => io.stderr.write(text),
-      outputError: (text, write) => {
-        write(
-          `${errPaint.error('skycast:')} ${translateCommanderError(text, t)}\n`
-        );
+      // In JSON mode stderr carries one JSON error line, so help printed
+      // as an error (`skycast cache`) is left out.
+      writeErr: text => {
+        if (!early.json) io.stderr.write(text);
+      },
+      outputError: text => {
+        report('USAGE', translateCommanderError(text, t), ExitCode.usage);
       },
     },
   });
@@ -230,21 +278,22 @@ export async function run(
   } catch (error) {
     if (error instanceof CommanderError) {
       // Help and --version "fail" with exit code 0.
-      return error.exitCode === 0 ? ExitCode.ok : ExitCode.usage;
+      if (error.exitCode === 0) return ExitCode.ok;
+      // A parent command without its subcommand shows help as an error.
+      if (!errors.reported && early.json) {
+        report(
+          'USAGE',
+          t.cli.errors.missingArgument(
+            t.cli.argumentNames.command ?? 'command'
+          ),
+          ExitCode.usage
+        );
+      }
+      return ExitCode.usage;
     }
     const failure = describeError(error, t);
-    if (failure.message) {
-      if (early.json) {
-        const payload = {
-          code: failure.code,
-          message: failure.message,
-          exitCode: failure.exitCode,
-        };
-        io.stderr.write(`${JSON.stringify({ error: payload })}\n`);
-      } else {
-        io.stderr.write(`${errPaint.error('skycast:')} ${failure.message}\n`);
-      }
-    }
+    if (failure.message)
+      report(failure.code, failure.message, failure.exitCode);
     if (failure.unexpected && !early.json) {
       io.stderr.write(`${errPaint.dim(t.cli.errors.verboseHint)}\n`);
       if (early.verbose && error instanceof Error && error.stack) {

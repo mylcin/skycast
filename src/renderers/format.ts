@@ -65,9 +65,14 @@ export function formatPercent(value: number, t: Messages): string {
   return t.percent(String(Math.round(value)));
 }
 
-/** "2026-09-27T06:56" → "06:56". */
-export function formatTime(value: LocalDateTime): string {
-  return value.slice(11, 16);
+/**
+ * "2026-09-27T06:56" → "06:56". With `day`, a time on another date gets a
+ * marker: a sunset just after midnight is "00:03 +1", not before sunrise.
+ */
+export function formatTime(value: LocalDateTime, day?: LocalDate): string {
+  const time = value.slice(11, 16);
+  if (!day || value.slice(0, 10) === day) return time;
+  return `${time} ${value.slice(0, 10) > day ? '+1' : '-1'}`;
 }
 
 function weekday(date: LocalDate): number {

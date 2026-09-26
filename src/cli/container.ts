@@ -44,6 +44,7 @@ export function createServices({
   });
   const { weather, geocoding } = createOpenMeteo({
     http,
+    // Validated in createSession; empty means "use the default".
     ...(io.env.SKYCAST_FORECAST_URL && {
       forecastUrl: io.env.SKYCAST_FORECAST_URL,
     }),

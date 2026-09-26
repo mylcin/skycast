@@ -110,8 +110,8 @@ Every command has `--help` with examples.
 
 - Add the country or region after a comma: `"Paris, France"`,
   `"Springfield, Illinois"`, `"Perth, UK"`. Country codes work too.
-- Or narrow the search with `--country TR`, or skip it with `--lat` and
-  `--lon`.
+- Or narrow the search with `--country TR` (also on `fav add` and
+  `config set city`), or skip it with `--lat` and `--lon`.
 - An ambiguous name opens a picker when you are at a terminal. In scripts
   and pipes skycast takes the most likely place and says so on stderr.
 - A country on its own means its capital when the capital shares the name
@@ -142,6 +142,11 @@ skycast fav add Tokyo
 skycast            # your default place in full, then favourites side by side
 skycast config     # what is set, and what is automatic
 ```
+
+`config reset` clears the settings and keeps your favourites. A settings
+file that is no longer valid JSON is kept as `config.json.bak`. Changes are
+written atomically under a lock, so two skycast processes can't overwrite
+each other.
 
 A setting is picked in this order: the flag, then an environment variable,
 then the saved value, then an automatic default. Language follows your
@@ -256,7 +261,10 @@ and the time zone are American, because many people elsewhere keep an
   (`clear`, `rain`, `thunderstorm`…), and `description` is in `--lang`.
 - `compare` prints `results`, one per place: `ok: true` with a `report`, or
   `ok: false` with an `error`. Plain `skycast` prints `city` and `favorites`.
-- `config` and `fav list` print the saved settings and places.
+- `config` prints each setting's `value` and its `source` (`saved`, `env`
+  or `automatic`), and `fav list` prints the saved places. Commands that
+  change something (`config set`, `fav add`, `cache clear`…) print what
+  changed.
 - `schemaVersion` changes only for breaking changes. New fields may appear.
 
 ```sh
@@ -265,15 +273,15 @@ skycast now Istanbul --json | jq '.current.temperature'
 
 ### Exit codes
 
-| Code | Meaning                                              |
-| ---- | ---------------------------------------------------- |
-| 0    | Success, including cached data shown while offline   |
-| 1    | Unexpected error, or an invalid settings file        |
-| 2    | Invalid command, option or value                     |
-| 3    | Place not found                                      |
-| 4    | Network unreachable or timed out, and nothing cached |
-| 5    | The weather service returned an error                |
-| 130  | Cancelled with Ctrl+C                                |
+| Code | Meaning                                                   |
+| ---- | --------------------------------------------------------- |
+| 0    | Success, including cached data shown while offline        |
+| 1    | Unexpected error, or settings that can't be read or saved |
+| 2    | Invalid command, option or value                          |
+| 3    | Place not found                                           |
+| 4    | Network unreachable or timed out, and nothing cached      |
+| 5    | The weather service returned an error                     |
+| 130  | Cancelled with Ctrl+C                                     |
 
 With `--json`, errors are one JSON line on stderr:
 `{"error":{"code":"LOCATION_NOT_FOUND","message":"…","exitCode":3}}`.
@@ -342,7 +350,7 @@ Some details are not obvious from the code layout:
   data up to a day old is shown with a notice.
 - **Output.** Tables measure plain text, drop low-priority columns on
   narrow terminals and add colour last, so escape codes never shift
-  columns. Colour comes from `NO_COLOR`, `FORCE_COLOR`, the TTY and the
+  columns. Every view fits terminals down to 30 columns. Colour comes from `NO_COLOR`, `FORCE_COLOR`, the TTY and the
   terminal's colour depth. Truecolor is downgraded to 256 or 16 colours.
 
 ## Tech stack

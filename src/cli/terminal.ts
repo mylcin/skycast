@@ -54,12 +54,19 @@ export function supportsUnicode(env: Env, platform: string): boolean {
   );
 }
 
+/**
+ * The narrowest layout: every view fits 30 columns (the longest condition,
+ * "Thunderstorm with heavy hail", is 28). Narrower terminals wrap lines.
+ */
+export const MIN_WIDTH = 30;
+
 /** Columns to lay out for: COLUMNS, then the terminal, then 80. */
 export function terminalWidth(stream: OutputStream, env: Env): number {
   const fromEnv = Number(env.COLUMNS);
-  if (Number.isInteger(fromEnv) && fromEnv > 0) return Math.max(20, fromEnv);
+  if (Number.isInteger(fromEnv) && fromEnv > 0)
+    return Math.max(MIN_WIDTH, fromEnv);
   if (stream.isTTY && stream.columns && stream.columns > 0) {
-    return Math.max(20, stream.columns);
+    return Math.max(MIN_WIDTH, stream.columns);
   }
   return 80;
 }

@@ -59,6 +59,17 @@ export function renderForecast(
   const units = report.units;
   const days = report.daily;
   const today = localToday(report);
+  if (days.length === 0) {
+    return (
+      [
+        ...header(report, ctx),
+        '',
+        paint.dim(t.weather.noData),
+        '',
+        ...footer(report.attribution, ctx),
+      ].join('\n') + '\n'
+    );
+  }
   const temp = (
     value: number
   ): { text: string; style: (s: string) => string } => ({

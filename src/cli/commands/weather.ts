@@ -1,5 +1,5 @@
 import { CancelledError, UsageError } from '../../core/errors.ts';
-import type { Location, WeatherReport } from '../../core/models.ts';
+import type { Freshness, Location, WeatherReport } from '../../core/models.ts';
 import type { ForecastRequest } from '../../providers/types.ts';
 import { renderCompare } from '../../renderers/compare.ts';
 import {
@@ -28,14 +28,17 @@ export async function fetchReports(
       ...(session.signal && { signal: session.signal }),
     });
     const stale = reports.find(report => report.freshness.stale);
-    if (stale) staleNotice(session, stale.freshness.fetchedAt);
+    if (stale) staleNotice(session, stale.freshness);
     return reports;
   } finally {
     session.spinner.stop();
   }
 }
 
-function staleNotice(session: Session, fetchedAt: Date): void {
+function staleNotice(
+  session: Session,
+  { fetchedAt, staleBecause }: Freshness
+): void {
   const { t } = session;
   const minutes = Math.max(
     1,
@@ -50,7 +53,11 @@ function staleNotice(session: Session, fetchedAt: Date): void {
     minute: '2-digit',
     hourCycle: 'h23',
   }).format(fetchedAt);
-  session.notice(t.cli.staleData(time, age));
+  session.notice(
+    staleBecause === 'unavailable'
+      ? t.cli.staleService(time, age)
+      : t.cli.staleData(time, age)
+  );
 }
 
 type Fallback = () => Location | undefined;
@@ -137,7 +144,10 @@ export async function compare(
   const outcomes: CompareOutcome[] = await Promise.all(
     places.map(async query => {
       try {
-        return { query, location: await resolvePlace(session, query) };
+        return {
+          query,
+          location: await resolvePlace(session, query, { countryFlag: false }),
+        };
       } catch (error) {
         if (error instanceof CancelledError) throw error;
         return { query, error, failure: describeError(error, t) };

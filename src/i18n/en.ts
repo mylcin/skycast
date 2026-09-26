@@ -86,6 +86,7 @@ export const en: Messages = {
     clouds: 'Clouds',
     todayRange: (low, high) => `Today ${low} to ${high}`,
     chanceOfRain: value => `rain ${value}`,
+    noData: 'No data for this period yet.',
   },
 
   forecast: {
@@ -101,7 +102,8 @@ export const en: Messages = {
   },
 
   hourly: {
-    title: hours => `Next ${hours} hours`,
+    title: hours => (hours === 1 ? 'Next hour' : `Next ${hours} hours`),
+    day: 'Day',
     time: 'Time',
     temperature: 'Temp',
     rain: 'Rain',
@@ -185,8 +187,22 @@ export const en: Messages = {
 
     fetching: 'Fetching the weather…',
     choosePlace: query => `Which “${query}”?`,
-    bestGuess: (place, query) =>
-      `Showing ${place}. Other places are called “${query}” too: add the country (“${query}, US”) or use --country.`,
+    bestGuess: (place, query, example) =>
+      `Showing ${place}. Other places are called “${query}” too: add a country or region, like “${example}”.`,
+    orUseCountry: 'Or use --country.',
+    invalidEnvUrl: (variable, value) =>
+      `${variable} must be a full http(s) URL without a password, not “${value}”.`,
+    staleService: (time, age) =>
+      `The weather service is not answering: showing data from ${time} (${age}).`,
+    argumentNames: {
+      command: 'a command',
+      place: 'a place',
+      places: 'the places',
+      shell: 'the shell',
+      key: 'the setting',
+      value: 'the value',
+      favorite: 'the favourite',
+    },
     staleData: (time, age) => `Offline: showing data from ${time} (${age}).`,
     minutesAgo: minutes =>
       minutes === 1 ? '1 minute ago' : `${minutes} minutes ago`,
@@ -220,8 +236,18 @@ export const en: Messages = {
         'Too many requests to the weather service. Wait a minute and try again.',
       invalidResponse:
         'The weather service sent an answer skycast does not understand. Try again later.',
-      config: (path, detail) =>
-        `The settings file ${path} is not valid (${detail}). Fix it, or start over with “skycast config reset”.`,
+      configInvalidJson: path =>
+        `The settings file ${path} is not valid JSON. Fix it, or run “skycast config reset”: the old file is kept as a backup.`,
+      configInvalidValue: (path, key) =>
+        `The setting “${key}” in ${path} is not valid. Change it with “skycast config set”, or run “skycast config reset”; favourites are kept.`,
+      configUnreadable: (path, code) =>
+        `skycast cannot read ${path} (${code}). Check the file's permissions.`,
+      configNotAFile: path =>
+        `${path} should be a file, but it is a folder. Move it out of the way.`,
+      storage: (path, reason) =>
+        `skycast could not write ${path} (${reason}). Check that the folder exists and is writable.`,
+      notFoundQualified: query =>
+        `No place called “${query}”. Check the spelling.`,
       internal: message => `Something went wrong: ${message}`,
       verboseHint:
         'Run it again with --verbose for details, and report it at https://github.com/mylcin/weather-cli/issues',
@@ -238,9 +264,15 @@ export const en: Messages = {
       keys: { city: 'city', units: 'units', lang: 'lang' },
       notSet: 'not set',
       automatic: value => `${value} (automatic)`,
+      fromEnv: (value, variable) => `${value} (from ${variable})`,
       saved: (key, value) => `${key} set to ${value}.`,
       cleared: key => `${key} is back to its default.`,
-      reset: 'All settings are back to their defaults.',
+      reset: favorites =>
+        favorites === 0
+          ? 'Settings are back to their defaults.'
+          : `Settings are back to their defaults; ${favorites === 1 ? '1 favourite was' : `${favorites} favourites were`} kept.`,
+      resetBackup: path =>
+        `Settings are back to their defaults. The old file is at ${path}.`,
       unknownKey: (key, keys) =>
         `There is no setting called “${key}”. Settings: ${keys}.`,
       invalidValue: (key, value, allowed) =>

@@ -44,4 +44,20 @@ describe('resolvePaths', () => {
       cache: '/b',
     });
   });
+
+  it('ignores empty and relative values', () => {
+    expect(
+      resolvePaths(
+        { SKYCAST_CONFIG_DIR: '', XDG_CONFIG_HOME: 'relative/dir' },
+        'linux',
+        '/home/ada'
+      ).config
+    ).toBe('/home/ada/.config/skycast');
+    expect(
+      resolvePaths({ APPDATA: '', LOCALAPPDATA: '' }, 'win32', 'C:\\Users\\Ada')
+    ).toEqual({
+      config: 'C:\\Users\\Ada\\AppData\\Roaming\\skycast',
+      cache: 'C:\\Users\\Ada\\AppData\\Local\\skycast\\cache',
+    });
+  });
 });

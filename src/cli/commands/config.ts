@@ -11,6 +11,7 @@ export const CONFIG_KEYS = ['city', 'units', 'lang'] as const;
 export type ConfigKey = (typeof CONFIG_KEYS)[number];
 
 const ALLOWED = { units: ['metric', 'imperial'], lang: ['en', 'tr'] } as const;
+const ENV = { units: 'SKYCAST_UNITS', lang: 'SKYCAST_LANG' } as const;
 
 export interface ConfigCommand {
   readonly session: Session;
@@ -21,33 +22,59 @@ export interface ConfigCommand {
 
 interface Setting {
   readonly key: ConfigKey;
-  /** What JSON output shows: the saved value, or null. */
-  readonly saved: unknown;
+  /** What JSON shows: the value in effect, or null. */
+  readonly value: unknown;
+  /** Where the value comes from. */
+  readonly source: 'saved' | 'env' | 'automatic' | 'unset';
   /** What people read. */
   readonly label: string;
 }
 
 function settings({ session, config, env }: ConfigCommand): Setting[] {
   const { t, render } = session;
-  const automatic = (value: string): string => t.cli.config.automatic(value);
+  const described = (
+    key: 'units' | 'lang',
+    saved: string | undefined,
+    effective: string
+  ): Setting => {
+    const variable = ENV[key];
+    const allowed: readonly string[] = ALLOWED[key];
+    if (allowed.includes(env[variable] ?? '')) {
+      return {
+        key,
+        value: effective,
+        source: 'env',
+        label: t.cli.config.fromEnv(effective, variable),
+      };
+    }
+    if (saved) return { key, value: saved, source: 'saved', label: saved };
+    return {
+      key,
+      value: effective,
+      source: 'automatic',
+      label: t.cli.config.automatic(effective),
+    };
+  };
   return [
-    {
-      key: 'city',
-      saved: config.city ? locationJson(config.city) : null,
-      label: config.city
-        ? placeLabel(config.city, t, render.symbols)
-        : t.cli.config.notSet,
-    },
-    {
-      key: 'units',
-      saved: config.units ?? null,
-      label: config.units ?? automatic(resolveUnits({ env })),
-    },
-    {
-      key: 'lang',
-      saved: config.lang ?? null,
-      label: config.lang ?? automatic(resolveLang({ env })),
-    },
+    config.city
+      ? {
+          key: 'city',
+          value: locationJson(config.city),
+          source: 'saved',
+          label: placeLabel(config.city, t, render.symbols),
+        }
+      : {
+          key: 'city',
+          value: null,
+          source: 'unset',
+          label: t.cli.config.notSet,
+        },
+    described(
+      'units',
+      config.units,
+      resolveUnits({ env, saved: config.units })
+    ),
+    described('lang', config.lang, resolveLang({ env, saved: config.lang })),
   ];
 }
 
@@ -55,25 +82,28 @@ export function list(command: ConfigCommand): void {
   const { session } = command;
   const all = settings(command);
   if (session.json) {
-    session.out(
-      renderJson(Object.fromEntries(all.map(s => [s.key, s.saved])) as never)
+    const body = Object.fromEntries(
+      all.map(s => [s.key, { value: s.value, source: s.source }])
     );
+    session.out(renderJson(body as never));
     return;
   }
   const width = Math.max(...all.map(s => s.key.length)) + 2;
-  session.out(
-    all
-      .map(s => `${session.render.paint.dim(padEnd(s.key, width))}${s.label}`)
-      .join('\n') + '\n'
+  const lines = all.map(
+    s => `${session.render.paint.dim(padEnd(s.key, width))}${s.label}`
   );
+  session.out(`${lines.join('\n')}\n`);
 }
 
 export function get(command: ConfigCommand, key: ConfigKey): void {
   const setting = settings(command).find(s => s.key === key);
   if (!setting) return;
-  command.session.out(
-    command.session.json
-      ? renderJson({ [key]: setting.saved } as never)
+  const { session } = command;
+  session.out(
+    session.json
+      ? renderJson({
+          [key]: { value: setting.value, source: setting.source },
+        } as never)
       : `${setting.label}\n`
   );
 }
@@ -81,16 +111,23 @@ export function get(command: ConfigCommand, key: ConfigKey): void {
 export async function set(
   command: ConfigCommand,
   key: ConfigKey,
-  words: readonly string[]
+  words: readonly string[],
+  country?: string
 ): Promise<void> {
-  const { session, store, config } = command;
+  const { session, store } = command;
   const { t } = session;
   const value = queryOf(words);
   if (key === 'city') {
-    const city = await resolvePlace(session, value);
-    await store.save({ ...config, city });
+    // Resolve (and maybe ask) before taking the lock on the settings file.
+    const city = await resolvePlace(session, value, {
+      country,
+      countryFlag: true,
+    });
+    await store.update(config => ({ ...config, city }));
     session.out(
-      `${t.cli.config.saved(key, placeLabel(city, t, session.render.symbols))}\n`
+      session.json
+        ? renderJson({ key, value: locationJson(city) })
+        : `${t.cli.config.saved(key, placeLabel(city, t, session.render.symbols))}\n`
     );
     return;
   }
@@ -100,20 +137,28 @@ export async function set(
       t.cli.config.invalidValue(key, value, allowed.join(', '))
     );
   }
-  await store.save({ ...config, [key]: value });
-  session.out(`${t.cli.config.saved(key, value)}\n`);
+  await store.update(config => ({ ...config, [key]: value }));
+  session.out(
+    session.json
+      ? renderJson({ key, value })
+      : `${t.cli.config.saved(key, value)}\n`
+  );
 }
 
 export async function unset(
   command: ConfigCommand,
   key: ConfigKey
 ): Promise<void> {
-  const { session, store, config } = command;
-  await store.save({
+  const { session, store } = command;
+  await store.update(config => ({
     favorites: config.favorites,
     ...(key !== 'city' && config.city && { city: config.city }),
     ...(key !== 'units' && config.units && { units: config.units }),
     ...(key !== 'lang' && config.lang && { lang: config.lang }),
-  });
-  session.out(`${session.t.cli.config.cleared(key)}\n`);
+  }));
+  session.out(
+    session.json
+      ? renderJson({ key, value: null })
+      : `${session.t.cli.config.cleared(key)}\n`
+  );
 }

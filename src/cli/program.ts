@@ -5,7 +5,9 @@ import {
   type CommandUnknownOpts,
   type OutputConfiguration,
 } from '@commander-js/extra-typings';
+import { UsageError } from '../core/errors.ts';
 import type { Messages } from '../i18n/index.ts';
+import { closest } from '../utils/edit-distance.ts';
 import { NAME, VERSION } from '../version.ts';
 import { CONFIG_KEYS, type ConfigKey } from './commands/config.ts';
 import { SHELLS, type Shell } from './completion.ts';
@@ -43,6 +45,7 @@ export interface Actions {
     set(
       key: ConfigKey,
       value: string[],
+      flags: { country?: string | undefined },
       command: CommandUnknownOpts
     ): void | Promise<void>;
     unset(key: ConfigKey, command: CommandUnknownOpts): void | Promise<void>;
@@ -197,10 +200,35 @@ export function buildProgram({
     .action((places, _options, command) => actions.compare(places, command));
 
   const key = () => new Argument('<key>', a.key).choices(CONFIG_KEYS);
+  // `config` and `fav` alone list. Anything else after them is a mistyped
+  // subcommand: say so, with a suggestion, not "too many arguments".
+  const listByDefault = (
+    command: CommandUnknownOpts,
+    list: () => void | Promise<void>
+  ) => {
+    const [word] = command.args;
+    if (word === undefined) return list();
+    const names = command.commands.flatMap(sub => [
+      sub.name(),
+      ...sub.aliases(),
+    ]);
+    const [suggestion] = closest(word.toLowerCase(), names, 2);
+    throw new UsageError(
+      [
+        t.cli.errors.unknownCommand(word),
+        suggestion ? t.cli.errors.suggestion(suggestion) : '',
+      ]
+        .filter(Boolean)
+        .join(' ')
+    );
+  };
   const config = program
     .command('config')
     .description(c.config)
-    .action((_options, command) => actions.config.list(command));
+    .allowExcessArguments()
+    .action((_options, command) =>
+      listByDefault(command, () => actions.config.list(command))
+    );
   config
     .command('list')
     .alias('ls')
@@ -216,8 +244,9 @@ export function buildProgram({
     .description(c.configSet)
     .addArgument(key())
     .argument('<value...>', a.value)
-    .action((name, value, _options, command) =>
-      actions.config.set(name, value, command)
+    .addOption(country())
+    .action((name, value, flags, command) =>
+      actions.config.set(name, value, flags, command)
     );
   config
     .command('unset')
@@ -237,7 +266,10 @@ export function buildProgram({
     .command('fav')
     .alias('favorites')
     .description(c.fav)
-    .action((_options, command) => actions.favorites.list(command));
+    .allowExcessArguments()
+    .action((_options, command) =>
+      listByDefault(command, () => actions.favorites.list(command))
+    );
   favorites
     .command('add')
     .description(c.favAdd)

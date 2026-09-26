@@ -97,18 +97,20 @@ function bash(root: CommandSpec, name: string): string {
   const cases = paths.map(({ path, spec }) => {
     const words = [
       ...spec.commands.flatMap(sub => sub.names),
-      ...(spec.choices ?? []),
       ...[...spec.options, ...(path.length ? globals : [])].flatMap(flagsOf),
     ];
     const pattern = path.length ? `"${path.join(' ')}"` : '""';
-    return `    ${pattern}) words="${[...new Set(words)].join(' ')}" ;;`;
+    // Choices belong to the first argument only: `config set units <TAB>`
+    // must not offer the setting names again.
+    const choices = spec.choices ? ` choices="${spec.choices.join(' ')}"` : '';
+    return `    ${pattern}) words="${[...new Set(words)].join(' ')}"${choices} ;;`;
   });
   const fn = `_${name.replace(/\W/g, '_')}`;
   return `# ${name} completion for bash (3.2 and later).
 # Load it in ~/.bashrc:  eval "$(${name} completion bash)"
 ${fn}() {
   local cur="\${COMP_WORDS[COMP_CWORD]}" prev="\${COMP_WORDS[COMP_CWORD-1]}"
-  local path="" skip=0 i word next words
+  local path="" skip=0 args=0 i word next words="" choices=""
   for ((i = 1; i < COMP_CWORD; i++)); do
     word="\${COMP_WORDS[i]}"
     if ((skip)); then skip=0; continue; fi
@@ -118,7 +120,8 @@ ${fn}() {
       *)
         next="\${path:+$path }$word"
         case "$next" in
-          ${known.join('|')}) path="$next" ;;
+          ${known.join('|')}) path="$next" args=0 ;;
+          *) args=$((args + 1)) ;;
         esac
         ;;
     esac
@@ -130,6 +133,7 @@ ${choiceCases.map(([flags, choices]) => `    ${flags}) COMPREPLY=($(compgen -W "
   case "$path" in
 ${cases.join('\n')}
   esac
+  if ((args == 0)); then words="$words $choices"; fi
   COMPREPLY=($(compgen -W "$words" -- "$cur"))
 }
 complete -F ${fn} ${name}
@@ -257,8 +261,10 @@ function fish(root: CommandSpec, name: string): string {
     if (path.length === 0) continue;
     for (const o of spec.options) lines.push(option(o, inHere));
     if (spec.choices) {
+      // Only right after the command, not for later arguments.
+      const first = `${inHere}; and test (count (commandline -opc)) -eq ${path.length + 1}`;
       lines.push(
-        `complete -c ${name} -n ${fishText(inHere)} -a ${fishText(spec.choices.join(' '))}`
+        `complete -c ${name} -n ${fishText(first)} -a ${fishText(spec.choices.join(' '))}`
       );
     }
   }

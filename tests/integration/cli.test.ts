@@ -73,7 +73,7 @@ describe('weather commands', () => {
       '3',
     ]);
     expect(code).toBe(0);
-    expect(log.forecast[0]?.get('forecast_days')).toBe('3');
+    expect(log.forecast[0]?.get('forecast_days')).toBe('4');
     expect(stdout).toContain('3-day forecast');
     expect(stdout).toContain('Tomorrow');
     expect(stdout).not.toContain('Wed 30');

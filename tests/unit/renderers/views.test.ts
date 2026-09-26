@@ -161,7 +161,9 @@ describe('content', () => {
     expect(renderCurrentCompact({ ...report, current: null }, context())).toBe(
       ''
     );
-    expect(renderHourly({ ...report, hourly: [] }, context())).toBe('');
+    const empty = renderHourly({ ...report, hourly: [] }, context());
+    expect(empty).toContain('No data for this period yet.');
+    expect(empty).toContain('Weather data by Open-Meteo.com');
   });
 
   it('labels an unnamed point by its coordinates', async () => {

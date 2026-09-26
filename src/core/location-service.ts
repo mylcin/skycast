@@ -112,7 +112,12 @@ export function createLocationService(
 
       const { places, ambiguous } = candidates;
       const [best, ...others] = places;
-      if (!best) throw new LocationNotFoundError(text);
+      if (!best) {
+        throw new LocationNotFoundError(
+          text,
+          Boolean(qualifier) || Boolean(options.countryCode)
+        );
+      }
       if (!ambiguous) {
         return {
           location: await settle(best, options),

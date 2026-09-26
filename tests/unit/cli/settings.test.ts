@@ -16,6 +16,12 @@ describe('systemLocale', () => {
     );
   });
 
+  it('treats empty variables as unset', () => {
+    expect(
+      systemLocale({ LC_ALL: '', LC_MESSAGES: '', LANG: 'tr_TR.UTF-8' })
+    ).toBe('tr-TR');
+  });
+
   it('falls back to Intl for C and POSIX', () => {
     expect(systemLocale({ LANG: 'C' })).toBe(
       Intl.DateTimeFormat().resolvedOptions().locale
@@ -43,6 +49,9 @@ describe('scanLang', () => {
     expect(scanLang(['--lang=tr'])).toBe('tr');
     expect(scanLang(['now', 'Istanbul'])).toBeUndefined();
     expect(scanLang(['now', '--', '--lang', 'tr'])).toBeUndefined();
+    expect(scanLang(['-ltr', 'now'])).toBe('tr');
+    expect(scanLang(['-cl', 'tr', 'now'])).toBe('tr');
+    expect(scanLang(['--lang', 'en', '--lang', 'tr'])).toBe('tr');
   });
 });
 

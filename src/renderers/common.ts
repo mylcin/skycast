@@ -4,7 +4,7 @@ import type { Messages } from '../i18n/index.ts';
 import type { RenderContext } from './context.ts';
 import { formatCoordinates, formatDate, formatTime } from './format.ts';
 import { placeTitle } from './place.ts';
-import { joinFitting, wrap } from './text.ts';
+import { joinFitting, truncate, wrap } from './text.ts';
 
 export function conditionText(code: number | null, t: Messages): string {
   return code !== null && isWmoCode(code)
@@ -14,9 +14,15 @@ export function conditionText(code: number | null, t: Messages): string {
 
 export { conditionGroup };
 
-/** The location's "today", from the current time or the first forecast day. */
+/**
+ * The location's "today". The data's own clock (`current.time`) can lag
+ * behind: a cached answer read just after midnight still says yesterday,
+ * while the first forecast day has already moved on. The later one wins.
+ */
 export function localToday(report: WeatherReport): string {
-  return report.current?.time.slice(0, 10) ?? report.daily[0]?.date ?? '';
+  const fromCurrent = report.current?.time.slice(0, 10) ?? '';
+  const firstDay = report.daily[0]?.date ?? '';
+  return fromCurrent > firstDay ? fromCurrent : firstDay;
 }
 
 /** Bold place name, then a dim line with region, coordinates and local time. */
@@ -27,7 +33,9 @@ export function header(
 ): string[] {
   const { t, paint, symbols } = ctx;
   const { location } = report;
-  const title = paint.bold(placeTitle(location, t, symbols));
+  const title = paint.bold(
+    truncate(placeTitle(location, t, symbols), ctx.width, symbols.ellipsis)
+  );
   const details = [
     location.name !== null &&
     location.region &&

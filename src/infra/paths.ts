@@ -20,21 +20,27 @@ export function resolvePaths(
 ): Paths {
   const path = platform === 'win32' ? win32 : posix;
   const join = (...parts: string[]): string => path.join(...parts);
+  // An empty or relative value would scatter settings into whatever folder
+  // skycast happens to run in, so only absolute paths count.
+  const dir = (value: string | undefined): string | undefined =>
+    value && path.isAbsolute(value) ? value : undefined;
   const windows = platform === 'win32';
+  const xdgConfig = dir(env.XDG_CONFIG_HOME);
+  const xdgCache = dir(env.XDG_CACHE_HOME);
   const config =
-    env.SKYCAST_CONFIG_DIR ??
-    (env.XDG_CONFIG_HOME
-      ? join(env.XDG_CONFIG_HOME, 'skycast')
+    dir(env.SKYCAST_CONFIG_DIR) ??
+    (xdgConfig
+      ? join(xdgConfig, 'skycast')
       : windows
-        ? join(env.APPDATA ?? join(home, 'AppData', 'Roaming'), 'skycast')
+        ? join(dir(env.APPDATA) ?? join(home, 'AppData', 'Roaming'), 'skycast')
         : join(home, '.config', 'skycast'));
   const cache =
-    env.SKYCAST_CACHE_DIR ??
-    (env.XDG_CACHE_HOME
-      ? join(env.XDG_CACHE_HOME, 'skycast')
+    dir(env.SKYCAST_CACHE_DIR) ??
+    (xdgCache
+      ? join(xdgCache, 'skycast')
       : windows
         ? join(
-            env.LOCALAPPDATA ?? join(home, 'AppData', 'Local'),
+            dir(env.LOCALAPPDATA) ?? join(home, 'AppData', 'Local'),
             'skycast',
             'cache'
           )

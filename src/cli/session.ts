@@ -1,3 +1,4 @@
+import { CancelledError, UsageError } from '../core/errors.ts';
 import type { ChooseLocation } from '../core/location-service.ts';
 import type { UnitSystem } from '../core/models.ts';
 import { getMessages, type Lang, type Messages } from '../i18n/index.ts';
@@ -66,6 +67,26 @@ export interface SessionOptions {
   readonly cache: Cache | null;
 }
 
+const isCancel = (error: unknown): boolean =>
+  error instanceof CancelledError ||
+  (error instanceof Error &&
+    (error.name === 'ExitPromptError' || error.name === 'AbortPromptError'));
+
+/** Overrides for the API endpoints must be plain http(s) URLs. */
+function checkEndpoints(env: Io['env'], t: Messages): void {
+  for (const variable of ['SKYCAST_FORECAST_URL', 'SKYCAST_GEOCODING_URL']) {
+    const value = env[variable];
+    if (value === undefined || value === '') continue;
+    const url = URL.canParse(value) ? new URL(value) : null;
+    const valid =
+      url !== null &&
+      (url.protocol === 'http:' || url.protocol === 'https:') &&
+      !url.username &&
+      !url.password;
+    if (!valid) throw new UsageError(t.cli.invalidEnvUrl(variable, value));
+  }
+}
+
 export function createSession({
   io,
   hooks,
@@ -79,6 +100,7 @@ export function createSession({
     saved: saved.lang,
   });
   const t = getMessages(lang);
+  checkEndpoints(io.env, t);
   const unicode = !options.ascii && supportsUnicode(io.env, io.platform);
   const symbols = getSymbols(unicode);
   const json = Boolean(options.json);
@@ -96,7 +118,9 @@ export function createSession({
   });
 
   // One prompt at a time, even when several places resolve in parallel.
+  // Cancelling one cancels the ones still waiting.
   let queue: Promise<unknown> = Promise.resolve();
+  let cancelled = false;
   const pick =
     hooks.choose ??
     ((places, query) =>
@@ -106,9 +130,15 @@ export function createSession({
         ...(io.signal && { signal: io.signal }),
       }));
   const choose: ChooseLocation = (places, query) => {
-    const next = queue.then(() => {
+    const next = queue.then(async () => {
+      if (cancelled) throw new CancelledError();
       spinner.stop();
-      return pick(places, query);
+      try {
+        return await pick(places, query);
+      } catch (error) {
+        if (isCancel(error)) cancelled = true;
+        throw error;
+      }
     });
     queue = next.catch(() => undefined);
     return next;

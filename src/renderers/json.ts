@@ -71,6 +71,8 @@ export function reportJson(
       uvIndexMax: day.uvIndexMax,
       sunrise: day.sunrise,
       sunset: day.sunset,
+      // Tells polar night (0) from midnight sun (86400) when there is no sunrise.
+      daylightSeconds: day.daylightSeconds,
     })),
     hourly: report.hourly.map(hour => ({
       time: hour.time,

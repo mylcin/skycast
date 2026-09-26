@@ -1,7 +1,8 @@
 import type { HourlyForecast, WeatherReport } from '../core/models.ts';
-import { conditionText, footer, header } from './common.ts';
+import { conditionText, footer, header, localToday } from './common.ts';
 import type { RenderContext } from './context.ts';
 import {
+  formatDay,
   formatPercent,
   formatPrecipitation,
   formatTemperature,
@@ -10,7 +11,7 @@ import {
 } from './format.ts';
 import { downsample, sparkline } from './sparkline.ts';
 import { renderTable, type Column } from './table.ts';
-import { padEnd, visibleWidth } from './text.ts';
+import { joinFitting, padEnd, visibleWidth } from './text.ts';
 
 /** Sparklines for temperature and rain chance, with an hour axis. */
 function charts(report: WeatherReport, ctx: RenderContext): string[] {
@@ -81,7 +82,10 @@ function charts(report: WeatherReport, ctx: RenderContext): string[] {
   let axis = '';
   for (let i = 0; i < count; i += step) {
     const hour = hours[i * perCell];
-    if (hour) axis = padEnd(axis, i * cell) + formatTime(hour.time).slice(0, 2);
+    // A label needs two columns; the last one must not hang off the chart.
+    if (hour && i * cell + 2 <= count * cell) {
+      axis = padEnd(axis, i * cell) + formatTime(hour.time).slice(0, 2);
+    }
   }
 
   const label = (text: string): string => paint.dim(padEnd(text, labelWidth));
@@ -92,7 +96,11 @@ function charts(report: WeatherReport, ctx: RenderContext): string[] {
     `${label(labels[1] ?? '')}${rainLine}${after(paint.dim(rainSummary))}`,
     paint.dim(' '.repeat(labelWidth) + axis),
   ];
-  if (!inline) lines.push(`${tempSummary}  ${paint.dim(rainSummary)}`);
+  if (!inline) {
+    lines.push(
+      ...joinFitting([tempSummary, paint.dim(rainSummary)], '  ', ctx.width)
+    );
+  }
   return lines;
 }
 
@@ -110,9 +118,39 @@ export function renderHourly(
   const { t, paint, symbols } = ctx;
   const units = report.units;
   const hours = report.hourly;
-  if (hours.length === 0) return '';
+  if (hours.length === 0) {
+    // Old offline data can end before now: say so rather than print nothing.
+    return (
+      [
+        ...header(report, ctx),
+        '',
+        paint.dim(t.weather.noData),
+        '',
+        ...footer(report.attribution, ctx),
+      ].join('\n') + '\n'
+    );
+  }
 
+  // Past 24 hours the same clock time repeats: name the day where it changes.
+  const today = localToday(report);
   const columns: Column<HourlyForecast>[] = [
+    ...(hours.length > 24 ||
+    hours[0]?.time.slice(0, 10) !== hours.at(-1)?.time.slice(0, 10)
+      ? [
+          {
+            header: t.hourly.day,
+            cell: (h: HourlyForecast) => {
+              const date = h.time.slice(0, 10);
+              const index = hours.indexOf(h);
+              const first =
+                index === 0 || hours[index - 1]?.time.slice(0, 10) !== date;
+              return first
+                ? { text: formatDay(date, today, t), style: paint.dim }
+                : '';
+            },
+          },
+        ]
+      : []),
     {
       header: t.hourly.time,
       cell: h => ({ text: formatTime(h.time), style: paint.bold }),

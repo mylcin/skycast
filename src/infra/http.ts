@@ -273,9 +273,11 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
             `request failed, using a ${Math.round(age / 60_000)} min old cache entry`
           );
           const fetchedAt = new Date(cached.storedAt);
+          const staleBecause =
+            error instanceof NetworkError ? 'offline' : 'unavailable';
           return {
             data: cached.data,
-            freshness: { fetchedAt, cached: true, stale: true },
+            freshness: { fetchedAt, cached: true, stale: true, staleBecause },
           };
         }
         throw error;

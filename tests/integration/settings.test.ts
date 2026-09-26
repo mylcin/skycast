@@ -36,9 +36,9 @@ describe('config', () => {
     expect(
       JSON.parse((await me.run(['config', '--json'])).stdout)
     ).toMatchObject({
-      city: { name: 'Istanbul', countryCode: 'TR' },
-      units: 'imperial',
-      lang: null,
+      city: { value: { name: 'Istanbul', countryCode: 'TR' }, source: 'saved' },
+      units: { value: 'imperial', source: 'saved' },
+      lang: { value: 'en', source: 'automatic' },
     });
   });
 
@@ -98,7 +98,7 @@ describe('config', () => {
     const broken = await me.run(['now', 'Istanbul']);
     expect(broken.code).toBe(1);
     expect(broken.stderr).toContain(
-      `The settings file ${me.configFile} is not valid (not valid JSON)`
+      `The settings file ${me.configFile} is not valid JSON`
     );
     expect(broken.stderr).not.toContain('--verbose');
 

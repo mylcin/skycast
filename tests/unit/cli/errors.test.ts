@@ -12,6 +12,7 @@ import {
   RateLimitError,
   TimeoutError,
   UpstreamError,
+  StorageError,
   UsageError,
 } from '../../../src/core/errors.ts';
 import { en } from '../../../src/i18n/en.ts';
@@ -51,10 +52,35 @@ describe('describeError', () => {
       '(500): api.test',
     ],
     [
-      new ConfigError('/c.json', 'units: bad'),
+      new ConfigError('/c.json', 'invalid-value', 'units'),
       'CONFIG',
       1,
-      '/c.json is not valid (units: bad)',
+      'The setting “units” in /c.json is not valid',
+    ],
+    [
+      new ConfigError('/c.json', 'invalid-json'),
+      'CONFIG',
+      1,
+      '/c.json is not valid JSON',
+    ],
+    [
+      new ConfigError('/c.json', 'unreadable', 'EACCES'),
+      'CONFIG',
+      1,
+      'cannot read /c.json (EACCES)',
+    ],
+    [new ConfigError('/c.json', 'not-a-file'), 'CONFIG', 1, 'it is a folder'],
+    [
+      new StorageError('/c.json', 'EACCES'),
+      'STORAGE',
+      1,
+      'could not write /c.json (EACCES)',
+    ],
+    [
+      new LocationNotFoundError('Paris, Frnce', true),
+      'LOCATION_NOT_FOUND',
+      3,
+      'Check the spelling.',
     ],
     [new UsageError('Try again'), 'USAGE', 2, 'Try again'],
   ])('%s', (error, code, exitCode, message) => {
@@ -103,8 +129,8 @@ describe('translateCommanderError', () => {
     ],
     [
       "error: missing required argument 'places'",
-      'missing places',
-      'places eksik',
+      'missing the places',
+      'yer adları eksik',
     ],
     [
       "error: option '-d, --days <n>' argument missing",

@@ -55,6 +55,7 @@ export interface Messages {
     readonly pressure: string;
     readonly clouds: string;
     todayRange(low: string, high: string): string;
+    readonly noData: string;
     chanceOfRain(value: string): string;
   };
 
@@ -72,6 +73,7 @@ export interface Messages {
 
   readonly hourly: {
     title(hours: number): string;
+    readonly day: string;
     readonly time: string;
     readonly temperature: string;
     readonly rain: string;
@@ -160,7 +162,12 @@ export interface CliMessages {
 
   readonly fetching: string;
   choosePlace(query: string): string;
-  bestGuess(place: string, query: string): string;
+  bestGuess(place: string, query: string, example: string): string;
+  readonly orUseCountry: string;
+  invalidEnvUrl(variable: string, value: string): string;
+  staleService(time: string, age: string): string;
+  /** Argument names in commander's "missing …" errors. */
+  readonly argumentNames: Readonly<Record<string, string>>;
   staleData(time: string, age: string): string;
   minutesAgo(minutes: number): string;
   hoursAgo(hours: number): string;
@@ -183,7 +190,12 @@ export interface CliMessages {
     upstream(status: number, reason: string): string;
     readonly rateLimited: string;
     readonly invalidResponse: string;
-    config(path: string, detail: string): string;
+    configInvalidJson(path: string): string;
+    configInvalidValue(path: string, key: string): string;
+    configUnreadable(path: string, code: string): string;
+    configNotAFile(path: string): string;
+    storage(path: string, reason: string): string;
+    notFoundQualified(query: string): string;
     internal(message: string): string;
     readonly verboseHint: string;
     readonly unknownOption: (option: string) => string;
@@ -199,9 +211,11 @@ export interface CliMessages {
     readonly keys: Readonly<Record<'city' | 'units' | 'lang', string>>;
     readonly notSet: string;
     readonly automatic: (value: string) => string;
+    fromEnv(value: string, variable: string): string;
     saved(key: string, value: string): string;
     cleared(key: string): string;
-    readonly reset: string;
+    reset(favorites: number): string;
+    resetBackup(path: string): string;
     unknownKey(key: string, keys: string): string;
     invalidValue(key: string, value: string, allowed: string): string;
   };

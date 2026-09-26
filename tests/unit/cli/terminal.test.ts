@@ -68,9 +68,9 @@ describe('terminalWidth', () => {
     expect(terminalWidth(pipe, { COLUMNS: 'wide' })).toBe(80);
   });
 
-  it('never lays out narrower than 20 columns', () => {
-    expect(terminalWidth(pipe, { COLUMNS: '5' })).toBe(20);
-    expect(terminalWidth(tty(24, 3), {})).toBe(20);
+  it('never lays out narrower than 30 columns', () => {
+    expect(terminalWidth(pipe, { COLUMNS: '5' })).toBe(30);
+    expect(terminalWidth(tty(24, 3), {})).toBe(30);
   });
 });
 

@@ -58,7 +58,7 @@ export default defineConfig(
     'infra is plumbing (HTTP, files); it must not depend on features.'
   ),
   {
-    files: ['tests/**'],
+    files: ['tests/**', 'scripts/**'],
     rules: {
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',

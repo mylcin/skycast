@@ -22,7 +22,7 @@ export function createOpenMeteoGeocoder({
   return {
     id: 'open-meteo-geocoding',
     attribution: {
-      text: 'Location data based on GeoNames',
+      text: 'Location data based on GeoNames.org',
       url: 'https://www.geonames.org/',
       license: 'CC BY 4.0',
     },

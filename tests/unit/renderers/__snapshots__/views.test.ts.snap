@@ -1,0 +1,561 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`snapshots > compare · en · 40 columns 1`] = `
+"Place          Now  Condition      Today
+Istanbul, TR  19°C  Overcast   18° – 20°
+Paris, FR     18°C  Overcast   16° – 22°
+New York, US  14°C  Drizzle    13° – 15°
+
+Weather data by Open-Meteo.com ·
+Location data based on GeoNames.org · CC
+BY 4.0
+"
+`;
+
+exports[`snapshots > compare · en · 80 columns 1`] = `
+"Place          Now  Feels  Condition  Wind          Humidity      Today
+Istanbul, TR  19°C    19°  Overcast   ↙ 18 km/h NE       78%  18° – 20°
+Paris, FR     18°C    19°  Overcast   ↙ 5 km/h NE        70%  16° – 22°
+New York, US  14°C    10°  Drizzle    ↓ 26 km/h N        82%  13° – 15°
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > compare · en · 120 columns 1`] = `
+"Place          Now  Feels  Condition  Wind          Humidity      Today
+Istanbul, TR  19°C    19°  Overcast   ↙ 18 km/h NE       78%  18° – 20°
+Paris, FR     18°C    19°  Overcast   ↙ 5 km/h NE        70%  16° – 22°
+New York, US  14°C    10°  Drizzle    ↓ 26 km/h N        82%  13° – 15°
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > compare · tr · 40 columns 1`] = `
+"Yer           Şimdi  Durum        Bugün
+Istanbul, TR   19°C  Kapalı   18° – 20°
+Paris, FR      18°C  Kapalı   16° – 22°
+New York, US   14°C  Çisenti  13° – 15°
+
+Weather data by Open-Meteo.com ·
+Location data based on GeoNames.org · CC
+BY 4.0
+"
+`;
+
+exports[`snapshots > compare · tr · 80 columns 1`] = `
+"Yer           Şimdi  Hissedilen  Durum    Rüzgâr         Nem      Bugün
+Istanbul, TR   19°C         19°  Kapalı   ↙ 18 km/sa KD  %78  18° – 20°
+Paris, FR      18°C         19°  Kapalı   ↙ 5 km/sa KD   %70  16° – 22°
+New York, US   14°C         10°  Çisenti  ↓ 26 km/sa K   %82  13° – 15°
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > compare · tr · 120 columns 1`] = `
+"Yer           Şimdi  Hissedilen  Durum    Rüzgâr         Nem      Bugün
+Istanbul, TR   19°C         19°  Kapalı   ↙ 18 km/sa KD  %78  18° – 20°
+Paris, FR      18°C         19°  Kapalı   ↙ 5 km/sa KD   %70  16° – 22°
+New York, US   14°C         10°  Çisenti  ↓ 26 km/sa K   %82  13° – 15°
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > forecast · ASCII only 1`] = `
+"Istanbul, Türkiye
+41.01°N, 28.95°E | Sun 27 Sep 00:30 | 7-day forecast
+
+Day       Condition      Low                 High  Rain   Amount  Wind
+Today     Light showers  18°  ------=====--   20°   68%   4.4 mm  23 km/h NE
+Tomorrow  Light showers  17°  -----=======-   20°   80%   8.0 mm  26 km/h N
+Tue 29    Light showers  17°  -----====----   19°   85%  21.2 mm  20 km/h N
+Wed 30    Thunderstorm   17°  -----====----   18°   88%  41.0 mm  30 km/h N
+Thu 1     Light rain     15°  --===========   21°   53%   2.0 mm  27 km/h NE
+Fri 2     Rain           15°  ===========--   20°   53%  15.3 mm  8 km/h NE
+Sat 3     Thunderstorm   18°  ------====---   19°   39%  11.0 mm  24 km/h NE
+
+Weather data by Open-Meteo.com | Location data based on GeoNames.org | CC BY 4.0
+"
+`;
+
+exports[`snapshots > forecast · en · 40 columns 1`] = `
+"Istanbul, Türkiye
+41.01°N, 28.95°E · Sun 27 Sep 00:30
+7-day forecast
+
+Day       Condition      Low  High  Rain
+Today     Light showers  18°   20°   68%
+Tomorrow  Light showers  17°   20°   80%
+Tue 29    Light showers  17°   19°   85%
+Wed 30    Thunderstorm   17°   18°   88%
+Thu 1     Light rain     15°   21°   53%
+Fri 2     Rain           15°   20°   53%
+Sat 3     Thunderstorm   18°   19°   39%
+
+Weather data by Open-Meteo.com ·
+Location data based on GeoNames.org · CC
+BY 4.0
+"
+`;
+
+exports[`snapshots > forecast · en · 80 columns 1`] = `
+"Istanbul, Türkiye
+41.01°N, 28.95°E · Sun 27 Sep 00:30 · 7-day forecast
+
+Day       Condition      Low                 High  Rain   Amount  Wind
+Today     Light showers  18°  ──────━━━━━──   20°   68%   4.4 mm  ↙ 23 km/h NE
+Tomorrow  Light showers  17°  ─────━━━━━━━─   20°   80%   8.0 mm  ↓ 26 km/h N
+Tue 29    Light showers  17°  ─────━━━━────   19°   85%  21.2 mm  ↓ 20 km/h N
+Wed 30    Thunderstorm   17°  ─────━━━━────   18°   88%  41.0 mm  ↓ 30 km/h N
+Thu 1     Light rain     15°  ──━━━━━━━━━━━   21°   53%   2.0 mm  ↙ 27 km/h NE
+Fri 2     Rain           15°  ━━━━━━━━━━━──   20°   53%  15.3 mm  ↙ 8 km/h NE
+Sat 3     Thunderstorm   18°  ──────━━━━───   19°   39%  11.0 mm  ↙ 24 km/h NE
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > forecast · en · 120 columns 1`] = `
+"Istanbul, Türkiye
+41.01°N, 28.95°E · Sun 27 Sep 00:30 · 7-day forecast
+
+Day       Condition      Low                        High  Rain   Amount  Wind
+Today     Light showers  18°  ──────────━━━━━━━───   20°   68%   4.4 mm  ↙ 23 km/h NE
+Tomorrow  Light showers  17°  ─────────━━━━━━━━━━─   20°   80%   8.0 mm  ↓ 26 km/h N
+Tue 29    Light showers  17°  ─────────━━━━━──────   19°   85%  21.2 mm  ↓ 20 km/h N
+Wed 30    Thunderstorm   17°  ────────━━━━━───────   18°   88%  41.0 mm  ↓ 30 km/h N
+Thu 1     Light rain     15°  ───━━━━━━━━━━━━━━━━━   21°   53%   2.0 mm  ↙ 27 km/h NE
+Fri 2     Rain           15°  ━━━━━━━━━━━━━━━━━───   20°   53%  15.3 mm  ↙ 8 km/h NE
+Sat 3     Thunderstorm   18°  ──────────━━━━━─────   19°   39%  11.0 mm  ↙ 24 km/h NE
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > forecast · tr · 40 columns 1`] = `
+"İstanbul, Türkiye
+41,01°K, 28,95°D · Paz 27 Eyl 00:30
+7 günlük tahmin
+
+Gün     Durum                  Min  Maks
+Bugün   Hafif sağanak          18°   20°
+Yarın   Hafif sağanak          17°   20°
+Sal 29  Hafif sağanak          17°   19°
+Çar 30  Gök gürültülü sağanak  17°   18°
+Per 1   Hafif yağmur           15°   21°
+Cum 2   Yağmur                 15°   20°
+Cmt 3   Gök gürültülü sağanak  18°   19°
+
+Weather data by Open-Meteo.com ·
+Location data based on GeoNames.org · CC
+BY 4.0
+"
+`;
+
+exports[`snapshots > forecast · tr · 80 columns 1`] = `
+"İstanbul, Türkiye
+41,01°K, 28,95°D · Paz 27 Eyl 00:30 · 7 günlük tahmin
+
+Gün     Durum                  Min                 Maks  Yağış   Miktar
+Bugün   Hafif sağanak          18°  ──────━━━━━──   20°    %68   4,4 mm
+Yarın   Hafif sağanak          17°  ─────━━━━━━━─   20°    %80   8,0 mm
+Sal 29  Hafif sağanak          17°  ─────━━━━────   19°    %85  21,2 mm
+Çar 30  Gök gürültülü sağanak  17°  ─────━━━━────   18°    %88  41,0 mm
+Per 1   Hafif yağmur           15°  ──━━━━━━━━━━━   21°    %53   2,0 mm
+Cum 2   Yağmur                 15°  ━━━━━━━━━━━──   20°    %53  15,3 mm
+Cmt 3   Gök gürültülü sağanak  18°  ──────━━━━───   19°    %39  11,0 mm
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > forecast · tr · 120 columns 1`] = `
+"İstanbul, Türkiye
+41,01°K, 28,95°D · Paz 27 Eyl 00:30 · 7 günlük tahmin
+
+Gün     Durum                  Min                        Maks  Yağış   Miktar  Rüzgâr
+Bugün   Hafif sağanak          18°  ──────────━━━━━━━───   20°    %68   4,4 mm  ↙ 23 km/sa KD
+Yarın   Hafif sağanak          17°  ─────────━━━━━━━━━━─   20°    %80   8,0 mm  ↓ 26 km/sa K
+Sal 29  Hafif sağanak          17°  ─────────━━━━━──────   19°    %85  21,2 mm  ↓ 20 km/sa K
+Çar 30  Gök gürültülü sağanak  17°  ────────━━━━━───────   18°    %88  41,0 mm  ↓ 30 km/sa K
+Per 1   Hafif yağmur           15°  ───━━━━━━━━━━━━━━━━━   21°    %53   2,0 mm  ↙ 27 km/sa KD
+Cum 2   Yağmur                 15°  ━━━━━━━━━━━━━━━━━───   20°    %53  15,3 mm  ↙ 8 km/sa KD
+Cmt 3   Gök gürültülü sağanak  18°  ──────────━━━━━─────   19°    %39  11,0 mm  ↙ 24 km/sa KD
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > hourly · charts only 1`] = `
+"Istanbul, Türkiye
+41.01°N, 28.95°E · Sun 27 Sep 00:30 · Next 48 hours
+
+Temp  ▆▆▆▅▆▇▆▅▅▅▅▆▆▇▇▆▅▅▄▃▂▂▂▂▂▂▁▁▁▁▂▂▃▃▅▆▆▆▆▇█▇▆▆▅▅▄▃  17° – 20°
+Rain  ▁▁▁▁▁▁▁▁▁▁▁▁▂▂▂▂▃▂▃▄▅▅▆▆▆▆▇▆▇▅▅▅▆▆▅▅▄▃▂▂▂▂▂▂▃▃▃▄  peak 80%
+      00  04  08  12  16  20  00  04  08  12  16  20
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > hourly · en · 40 columns 1`] = `
+"Istanbul, Türkiye
+41.01°N, 28.95°E · Sun 27 Sep 00:30
+Next 24 hours
+
+Temp  ▇▆█▆▆▆██▆▃▂▁  18° – 20°
+Rain  ▁▁▁▁▁▁▂▂▃▄▅▆  peak 68%
+      00  08  16
+
+Time   Temp  Condition      Rain
+00:00   19°  Overcast         0%
+01:00   19°  Overcast         0%
+02:00   19°  Overcast         0%
+03:00   19°  Overcast         0%
+04:00   19°  Overcast         0%
+05:00   20°  Overcast         0%
+06:00   19°  Overcast         0%
+07:00   19°  Overcast         0%
+08:00   19°  Overcast         0%
+09:00   19°  Overcast         3%  0.1 mm
+10:00   19°  Overcast         3%  0.1 mm
+11:00   19°  Overcast         5%  0.1 mm
+12:00   19°  Overcast         8%  0.1 mm
+13:00   20°  Overcast        20%  0.2 mm
+14:00   20°  Overcast        20%  0.1 mm
+15:00   19°  Light showers   20%  0.3 mm
+16:00   19°  Light showers   28%  0.2 mm
+17:00   19°  Light showers   20%  0.2 mm
+18:00   19°  Light rain      33%  0.2 mm
+19:00   18°  Light rain      45%  0.2 mm
+20:00   18°  Light rain      50%  0.2 mm
+21:00   18°  Light rain      55%  0.6 mm
+22:00   18°  Light rain      68%  0.8 mm
+23:00   18°  Light rain      65%  1.0 mm
+
+Weather data by Open-Meteo.com ·
+Location data based on GeoNames.org · CC
+BY 4.0
+"
+`;
+
+exports[`snapshots > hourly · en · 80 columns 1`] = `
+"Istanbul, Türkiye
+41.01°N, 28.95°E · Sun 27 Sep 00:30 · Next 24 hours
+
+Temp  ▇▇▇▇▆▆▆▆▆▆██▆▆▅▅▅▅▆▆▆▆▆▆▇▇████▇▇▆▆▅▅▄▄▂▂▂▂▁▁▁▁▁▁  18° – 20°
+Rain  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▂▂▂▂▂▂▂▃▃▂▂▃▃▄▄▅▅▅▅▆▆▆▆  peak 68%
+      00  02  04  06  08  10  12  14  16  18  20  22
+
+Time   Temp  Condition      Rain          Wind
+00:00   19°  Overcast         0%          19 km/h
+01:00   19°  Overcast         0%          17 km/h
+02:00   19°  Overcast         0%          17 km/h
+03:00   19°  Overcast         0%          16 km/h
+04:00   19°  Overcast         0%          14 km/h
+05:00   20°  Overcast         0%          17 km/h
+06:00   19°  Overcast         0%          17 km/h
+07:00   19°  Overcast         0%          21 km/h
+08:00   19°  Overcast         0%          21 km/h
+09:00   19°  Overcast         3%  0.1 mm  20 km/h
+10:00   19°  Overcast         3%  0.1 mm  20 km/h
+11:00   19°  Overcast         5%  0.1 mm  22 km/h
+12:00   19°  Overcast         8%  0.1 mm  22 km/h
+13:00   20°  Overcast        20%  0.2 mm  23 km/h
+14:00   20°  Overcast        20%  0.1 mm  22 km/h
+15:00   19°  Light showers   20%  0.3 mm  21 km/h
+16:00   19°  Light showers   28%  0.2 mm  20 km/h
+17:00   19°  Light showers   20%  0.2 mm  21 km/h
+18:00   19°  Light rain      33%  0.2 mm  21 km/h
+19:00   18°  Light rain      45%  0.2 mm  20 km/h
+20:00   18°  Light rain      50%  0.2 mm  20 km/h
+21:00   18°  Light rain      55%  0.6 mm  21 km/h
+22:00   18°  Light rain      68%  0.8 mm  22 km/h
+23:00   18°  Light rain      65%  1.0 mm  22 km/h
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > hourly · en · 120 columns 1`] = `
+"Istanbul, Türkiye
+41.01°N, 28.95°E · Sun 27 Sep 00:30 · Next 24 hours
+
+Temp  ▇▇▇▇▆▆▆▆▆▆██▆▆▅▅▅▅▆▆▆▆▆▆▇▇████▇▇▆▆▅▅▄▄▂▂▂▂▁▁▁▁▁▁  18° – 20°
+Rain  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▂▂▂▂▂▂▂▃▃▂▂▃▃▄▄▅▅▅▅▆▆▆▆  peak 68%
+      00  02  04  06  08  10  12  14  16  18  20  22
+
+Time   Temp  Condition      Rain          Wind
+00:00   19°  Overcast         0%          19 km/h
+01:00   19°  Overcast         0%          17 km/h
+02:00   19°  Overcast         0%          17 km/h
+03:00   19°  Overcast         0%          16 km/h
+04:00   19°  Overcast         0%          14 km/h
+05:00   20°  Overcast         0%          17 km/h
+06:00   19°  Overcast         0%          17 km/h
+07:00   19°  Overcast         0%          21 km/h
+08:00   19°  Overcast         0%          21 km/h
+09:00   19°  Overcast         3%  0.1 mm  20 km/h
+10:00   19°  Overcast         3%  0.1 mm  20 km/h
+11:00   19°  Overcast         5%  0.1 mm  22 km/h
+12:00   19°  Overcast         8%  0.1 mm  22 km/h
+13:00   20°  Overcast        20%  0.2 mm  23 km/h
+14:00   20°  Overcast        20%  0.1 mm  22 km/h
+15:00   19°  Light showers   20%  0.3 mm  21 km/h
+16:00   19°  Light showers   28%  0.2 mm  20 km/h
+17:00   19°  Light showers   20%  0.2 mm  21 km/h
+18:00   19°  Light rain      33%  0.2 mm  21 km/h
+19:00   18°  Light rain      45%  0.2 mm  20 km/h
+20:00   18°  Light rain      50%  0.2 mm  20 km/h
+21:00   18°  Light rain      55%  0.6 mm  21 km/h
+22:00   18°  Light rain      68%  0.8 mm  22 km/h
+23:00   18°  Light rain      65%  1.0 mm  22 km/h
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > hourly · tr · 40 columns 1`] = `
+"İstanbul, Türkiye
+41,01°K, 28,95°D · Paz 27 Eyl 00:30
+Önümüzdeki 24 saat
+
+Sıcaklık  ▇▆█▆▆▆██▆▃▂▁  18° – 20°
+Yağış     ▁▁▁▁▁▁▂▂▃▄▅▆  en fazla %68
+          00  08  16
+
+Saat   Sıcaklık  Durum          Yağış
+00:00       19°  Kapalı            %0
+01:00       19°  Kapalı            %0
+02:00       19°  Kapalı            %0
+03:00       19°  Kapalı            %0
+04:00       19°  Kapalı            %0
+05:00       20°  Kapalı            %0
+06:00       19°  Kapalı            %0
+07:00       19°  Kapalı            %0
+08:00       19°  Kapalı            %0
+09:00       19°  Kapalı            %3
+10:00       19°  Kapalı            %3
+11:00       19°  Kapalı            %5
+12:00       19°  Kapalı            %8
+13:00       20°  Kapalı           %20
+14:00       20°  Kapalı           %20
+15:00       19°  Hafif sağanak    %20
+16:00       19°  Hafif sağanak    %28
+17:00       19°  Hafif sağanak    %20
+18:00       19°  Hafif yağmur     %33
+19:00       18°  Hafif yağmur     %45
+20:00       18°  Hafif yağmur     %50
+21:00       18°  Hafif yağmur     %55
+22:00       18°  Hafif yağmur     %68
+23:00       18°  Hafif yağmur     %65
+
+Weather data by Open-Meteo.com ·
+Location data based on GeoNames.org · CC
+BY 4.0
+"
+`;
+
+exports[`snapshots > hourly · tr · 80 columns 1`] = `
+"İstanbul, Türkiye
+41,01°K, 28,95°D · Paz 27 Eyl 00:30 · Önümüzdeki 24 saat
+
+Sıcaklık  ▇▇▇▇▆▆▆▆▆▆██▆▆▅▅▅▅▆▆▆▆▆▆▇▇████▇▇▆▆▅▅▄▄▂▂▂▂▁▁▁▁▁▁  18° – 20°
+Yağış     ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▂▂▂▂▂▂▂▃▃▂▂▃▃▄▄▅▅▅▅▆▆▆▆  en fazla %68
+          00  02  04  06  08  10  12  14  16  18  20  22
+
+Saat   Sıcaklık  Durum          Yağış          Rüzgâr
+00:00       19°  Kapalı            %0          19 km/sa
+01:00       19°  Kapalı            %0          17 km/sa
+02:00       19°  Kapalı            %0          17 km/sa
+03:00       19°  Kapalı            %0          16 km/sa
+04:00       19°  Kapalı            %0          14 km/sa
+05:00       20°  Kapalı            %0          17 km/sa
+06:00       19°  Kapalı            %0          17 km/sa
+07:00       19°  Kapalı            %0          21 km/sa
+08:00       19°  Kapalı            %0          21 km/sa
+09:00       19°  Kapalı            %3  0,1 mm  20 km/sa
+10:00       19°  Kapalı            %3  0,1 mm  20 km/sa
+11:00       19°  Kapalı            %5  0,1 mm  22 km/sa
+12:00       19°  Kapalı            %8  0,1 mm  22 km/sa
+13:00       20°  Kapalı           %20  0,2 mm  23 km/sa
+14:00       20°  Kapalı           %20  0,1 mm  22 km/sa
+15:00       19°  Hafif sağanak    %20  0,3 mm  21 km/sa
+16:00       19°  Hafif sağanak    %28  0,2 mm  20 km/sa
+17:00       19°  Hafif sağanak    %20  0,2 mm  21 km/sa
+18:00       19°  Hafif yağmur     %33  0,2 mm  21 km/sa
+19:00       18°  Hafif yağmur     %45  0,2 mm  20 km/sa
+20:00       18°  Hafif yağmur     %50  0,2 mm  20 km/sa
+21:00       18°  Hafif yağmur     %55  0,6 mm  21 km/sa
+22:00       18°  Hafif yağmur     %68  0,8 mm  22 km/sa
+23:00       18°  Hafif yağmur     %65  1,0 mm  22 km/sa
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > hourly · tr · 120 columns 1`] = `
+"İstanbul, Türkiye
+41,01°K, 28,95°D · Paz 27 Eyl 00:30 · Önümüzdeki 24 saat
+
+Sıcaklık  ▇▇▇▇▆▆▆▆▆▆██▆▆▅▅▅▅▆▆▆▆▆▆▇▇████▇▇▆▆▅▅▄▄▂▂▂▂▁▁▁▁▁▁  18° – 20°
+Yağış     ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▂▂▂▂▂▂▂▃▃▂▂▃▃▄▄▅▅▅▅▆▆▆▆  en fazla %68
+          00  02  04  06  08  10  12  14  16  18  20  22
+
+Saat   Sıcaklık  Durum          Yağış          Rüzgâr
+00:00       19°  Kapalı            %0          19 km/sa
+01:00       19°  Kapalı            %0          17 km/sa
+02:00       19°  Kapalı            %0          17 km/sa
+03:00       19°  Kapalı            %0          16 km/sa
+04:00       19°  Kapalı            %0          14 km/sa
+05:00       20°  Kapalı            %0          17 km/sa
+06:00       19°  Kapalı            %0          17 km/sa
+07:00       19°  Kapalı            %0          21 km/sa
+08:00       19°  Kapalı            %0          21 km/sa
+09:00       19°  Kapalı            %3  0,1 mm  20 km/sa
+10:00       19°  Kapalı            %3  0,1 mm  20 km/sa
+11:00       19°  Kapalı            %5  0,1 mm  22 km/sa
+12:00       19°  Kapalı            %8  0,1 mm  22 km/sa
+13:00       20°  Kapalı           %20  0,2 mm  23 km/sa
+14:00       20°  Kapalı           %20  0,1 mm  22 km/sa
+15:00       19°  Hafif sağanak    %20  0,3 mm  21 km/sa
+16:00       19°  Hafif sağanak    %28  0,2 mm  20 km/sa
+17:00       19°  Hafif sağanak    %20  0,2 mm  21 km/sa
+18:00       19°  Hafif yağmur     %33  0,2 mm  21 km/sa
+19:00       18°  Hafif yağmur     %45  0,2 mm  20 km/sa
+20:00       18°  Hafif yağmur     %50  0,2 mm  20 km/sa
+21:00       18°  Hafif yağmur     %55  0,6 mm  21 km/sa
+22:00       18°  Hafif yağmur     %68  0,8 mm  22 km/sa
+23:00       18°  Hafif yağmur     %65  1,0 mm  22 km/sa
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > now · ASCII only 1`] = `
+"Istanbul, Türkiye
+41.01°N, 28.95°E | Sun 27 Sep 00:30
+
+               Overcast
+     .--.      19°C  feels like 19°
+  .-(    ).    Wind 18 km/h NE | gusts 31 km/h
+ (___.__)__)   Humidity 78%
+               Today 18° to 20° | rain 68% (4.4 mm)
+               Sunrise 06:56 | Sunset 18:53
+
+Weather data by Open-Meteo.com | Location data based on GeoNames.org | CC BY 4.0
+"
+`;
+
+exports[`snapshots > now · en · 40 columns 1`] = `
+"Istanbul, Türkiye
+41.01°N, 28.95°E · Sun 27 Sep 00:30
+
+Overcast
+19°C  feels like 19°
+Wind ↙ 18 km/h NE · gusts 31 km/h
+Humidity 78%
+Today 18° to 20° · rain 68% (4.4 mm)
+Sunrise 06:56 · Sunset 18:53
+
+Weather data by Open-Meteo.com ·
+Location data based on GeoNames.org · CC
+BY 4.0
+"
+`;
+
+exports[`snapshots > now · en · 80 columns 1`] = `
+"Istanbul, Türkiye
+41.01°N, 28.95°E · Sun 27 Sep 00:30
+
+               Overcast
+     .--.      19°C  feels like 19°
+  .-(    ).    Wind ↙ 18 km/h NE · gusts 31 km/h
+ (___.__)__)   Humidity 78%
+               Today 18° to 20° · rain 68% (4.4 mm)
+               Sunrise 06:56 · Sunset 18:53
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > now · en · 120 columns 1`] = `
+"Istanbul, Türkiye
+41.01°N, 28.95°E · Sun 27 Sep 00:30
+
+               Overcast
+     .--.      19°C  feels like 19°
+  .-(    ).    Wind ↙ 18 km/h NE · gusts 31 km/h
+ (___.__)__)   Humidity 78%
+               Today 18° to 20° · rain 68% (4.4 mm)
+               Sunrise 06:56 · Sunset 18:53
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > now · imperial 1`] = `
+"Istanbul, Türkiye
+41.01°N, 28.95°E · Sun 27 Sep 00:30
+
+               Overcast
+     .--.      67°F  feels like 66°
+  .-(    ).    Wind ↙ 11 mph NE · gusts 19 mph
+ (___.__)__)   Humidity 78%
+               Today 64° to 68° · rain 68% (0.17 in)
+               Sunrise 06:56 · Sunset 18:53
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > now · tr · 40 columns 1`] = `
+"İstanbul, Türkiye
+41,01°K, 28,95°D · Paz 27 Eyl 00:30
+
+Kapalı
+19°C  hissedilen 19°
+Rüzgâr ↙ 18 km/sa KD · hamle 31 km/sa
+Nem %78
+Bugün 18° ile 20° arası
+yağış %68 (4,4 mm)
+Gün doğumu 06:56 · Gün batımı 18:53
+
+Weather data by Open-Meteo.com ·
+Location data based on GeoNames.org · CC
+BY 4.0
+"
+`;
+
+exports[`snapshots > now · tr · 80 columns 1`] = `
+"İstanbul, Türkiye
+41,01°K, 28,95°D · Paz 27 Eyl 00:30
+
+               Kapalı
+     .--.      19°C  hissedilen 19°
+  .-(    ).    Rüzgâr ↙ 18 km/sa KD · hamle 31 km/sa
+ (___.__)__)   Nem %78
+               Bugün 18° ile 20° arası · yağış %68 (4,4 mm)
+               Gün doğumu 06:56 · Gün batımı 18:53
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;
+
+exports[`snapshots > now · tr · 120 columns 1`] = `
+"İstanbul, Türkiye
+41,01°K, 28,95°D · Paz 27 Eyl 00:30
+
+               Kapalı
+     .--.      19°C  hissedilen 19°
+  .-(    ).    Rüzgâr ↙ 18 km/sa KD · hamle 31 km/sa
+ (___.__)__)   Nem %78
+               Bugün 18° ile 20° arası · yağış %68 (4,4 mm)
+               Gün doğumu 06:56 · Gün batımı 18:53
+
+Weather data by Open-Meteo.com · Location data based on GeoNames.org · CC BY 4.0
+"
+`;

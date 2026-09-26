@@ -8,7 +8,6 @@ import {
   formatTemperature,
   formatWind,
 } from './format.ts';
-import { temperatureRgb, toCelsius } from './paint.ts';
 import { renderTable, type Column } from './table.ts';
 
 /**
@@ -45,10 +44,16 @@ function rangeBar(
   return { text: chars.join(''), style };
 }
 
+export interface ForecastOptions {
+  /** The table alone: no heading, no credits. */
+  readonly compact?: boolean;
+}
+
 /** The `forecast` view: one row per day. */
 export function renderForecast(
   report: WeatherReport,
-  ctx: RenderContext
+  ctx: RenderContext,
+  options: ForecastOptions = {}
 ): string {
   const { t, paint, symbols } = ctx;
   const units = report.units;
@@ -125,6 +130,7 @@ export function renderForecast(
     ellipsis: symbols.ellipsis,
     header: paint.dim,
   });
+  if (options.compact) return `${table.join('\n')}\n`;
   return (
     [
       ...header(report, ctx, t.forecast.title(days.length)),
@@ -135,5 +141,3 @@ export function renderForecast(
     ].join('\n') + '\n'
   );
 }
-
-export { temperatureRgb, toCelsius };

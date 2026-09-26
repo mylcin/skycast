@@ -122,6 +122,149 @@ export const en: Messages = {
     today: 'Today',
   },
 
+  cli: {
+    description:
+      'Weather in your terminal: ASCII art, colour-coded forecasts and side-by-side city comparisons.',
+    headings: {
+      'Usage:': 'Usage:',
+      'Arguments:': 'Arguments:',
+      'Options:': 'Options:',
+      'Global Options:': 'Global Options:',
+      'Commands:': 'Commands:',
+    },
+    examples: 'Examples:',
+    helpChoices: choices => `one of: ${choices}`,
+    helpDefault: value => `default: ${value}`,
+    options: {
+      help: 'show help',
+      helpCommand: 'show help for a command',
+      version: 'show the version',
+      units: 'unit system',
+      lang: 'language',
+      json: 'print JSON, for scripts',
+      noColor: 'plain text without colours',
+      compact: 'shorter output',
+      verbose: 'explain what happens, on stderr',
+      ascii: 'ASCII only, no Unicode symbols',
+      noCache: 'always fetch fresh data',
+      lat: 'latitude, instead of a city',
+      lon: 'longitude, instead of a city',
+      country: 'only places in this country (ISO code, e.g. TR)',
+      days: 'number of days, 1–16',
+      hours: 'number of hours, 1–168',
+    },
+    arguments: {
+      city: 'place name; add the country to be precise: "Paris, France"',
+      cities: 'two or more places; quote names with spaces',
+      shell: 'bash, zsh or fish',
+      key: 'city, units or lang',
+      value: 'the new value',
+      favorite: 'name or number from "fav list"',
+    },
+    commands: {
+      now: 'current weather',
+      forecast: 'daily forecast',
+      hourly: 'hour-by-hour forecast with charts',
+      compare: 'compare places side by side',
+      config: 'show or change settings',
+      configList: 'show all settings',
+      configGet: 'show one setting',
+      configSet: 'change a setting',
+      configUnset: 'go back to the default for a setting',
+      configReset: 'go back to the defaults for everything',
+      configPath: 'show where settings are stored',
+      fav: 'manage favourite places',
+      favAdd: 'add a favourite',
+      favRemove: 'remove a favourite',
+      favList: 'list favourites',
+      completion: 'print a shell completion script',
+      cache: 'manage cached responses',
+      cacheClear: 'delete cached responses',
+    },
+
+    fetching: 'Fetching the weather…',
+    choosePlace: query => `Which “${query}”?`,
+    bestGuess: (place, query) =>
+      `Showing ${place}. Other places are called “${query}” too: add the country (“${query}, US”) or use --country.`,
+    staleData: (time, age) => `Offline: showing data from ${time} (${age}).`,
+    minutesAgo: minutes =>
+      minutes === 1 ? '1 minute ago' : `${minutes} minutes ago`,
+    hoursAgo: hours => (hours === 1 ? '1 hour ago' : `${hours} hours ago`),
+    noCity:
+      'Which place? Try “skycast now Istanbul”, or set a default with “skycast config set city Istanbul”.',
+    latLonPair: '--lat and --lon go together.',
+    cityOrCoordinates: 'Give either a place name or --lat/--lon, not both.',
+    invalidLatitude: value =>
+      `“${value}” is not a latitude between -90 and 90.`,
+    invalidLongitude: value =>
+      `“${value}” is not a longitude between -180 and 180.`,
+    invalidInteger: (value, min, max) =>
+      `“${value}” is not a whole number from ${min} to ${max}.`,
+    invalidCountry: value =>
+      `“${value}” is not a two-letter country code (TR, DE, US…).`,
+    compareNeedsTwo: 'Compare needs at least two places.',
+    compareTooMany: max => `Compare up to ${max} places at a time.`,
+    compareFailed: (query, reason) => `${query}: ${reason}`,
+    didYouMean: command => `Did you mean “skycast ${command}”?`,
+
+    errors: {
+      notFound: query =>
+        `No place called “${query}”. Check the spelling, or add the country: “${query}, TR”.`,
+      network: host =>
+        `Could not reach ${host}. Check your connection; recent results are kept for offline use.`,
+      timeout: host => `${host} did not answer in time. Try again in a moment.`,
+      upstream: (status, reason) =>
+        `The weather service returned an error (${status}): ${reason}`,
+      rateLimited:
+        'Too many requests to the weather service. Wait a minute and try again.',
+      invalidResponse:
+        'The weather service sent an answer skycast does not understand. Try again later.',
+      config: (path, detail) =>
+        `The settings file ${path} is not valid (${detail}). Fix it, or start over with “skycast config reset”.`,
+      internal: message => `Something went wrong: ${message}`,
+      verboseHint:
+        'Run it again with --verbose for details, and report it at https://github.com/mylcin/weather-cli/issues',
+      unknownOption: option => `unknown option ${option}`,
+      unknownCommand: command => `unknown command “${command}”`,
+      missingArgument: name => `missing ${name}`,
+      optionMissingValue: option => `${option} needs a value`,
+      tooManyArguments: 'too many arguments',
+      invalidChoice: (value, choices) => `“${value}” is not one of: ${choices}`,
+      suggestion: options => `Did you mean ${options}?`,
+    },
+
+    config: {
+      keys: { city: 'city', units: 'units', lang: 'lang' },
+      notSet: 'not set',
+      automatic: value => `${value} (automatic)`,
+      saved: (key, value) => `${key} set to ${value}.`,
+      cleared: key => `${key} is back to its default.`,
+      reset: 'All settings are back to their defaults.',
+      unknownKey: (key, keys) =>
+        `There is no setting called “${key}”. Settings: ${keys}.`,
+      invalidValue: (key, value, allowed) =>
+        `“${value}” is not a valid ${key}. Use one of: ${allowed}.`,
+    },
+
+    favorites: {
+      added: place => `Added ${place} to favourites.`,
+      alreadyAdded: place => `${place} is already a favourite.`,
+      removed: place => `Removed ${place} from favourites.`,
+      notFound: ref => `No favourite matches “${ref}”. See “skycast fav list”.`,
+      empty: 'No favourites yet. Add one with “skycast fav add Istanbul”.',
+    },
+
+    home: {
+      empty:
+        'Set a default place with “skycast config set city Istanbul” or add favourites with “skycast fav add Paris”; then plain “skycast” shows them.',
+    },
+
+    cacheCleared: count =>
+      count === 1
+        ? 'Removed 1 cached response.'
+        : `Removed ${count} cached responses.`,
+  },
+
   coordinates: (latitude, longitude) => `${latitude}, ${longitude}`,
   north: 'N',
   south: 'S',

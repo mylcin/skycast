@@ -5,10 +5,16 @@ import { formatPercent, formatTemperature, formatWind } from './format.ts';
 import { placeShort } from './place.ts';
 import { renderTable, type Column } from './table.ts';
 
+export interface CompareOptions {
+  /** The table alone, without credits. */
+  readonly compact?: boolean;
+}
+
 /** The `compare` view: one row per place. */
 export function renderCompare(
   reports: readonly WeatherReport[],
-  ctx: RenderContext
+  ctx: RenderContext,
+  options: CompareOptions = {}
 ): string {
   const { t, paint, symbols } = ctx;
   const temp = (
@@ -91,6 +97,7 @@ export function renderCompare(
     ellipsis: symbols.ellipsis,
     header: paint.dim,
   });
+  if (options.compact) return `${table.join('\n')}\n`;
   const attribution = reports.flatMap(r => r.attribution);
   return [...table, '', ...footer(attribution, ctx)].join('\n') + '\n';
 }

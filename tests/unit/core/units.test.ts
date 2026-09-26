@@ -122,14 +122,17 @@ describe('convertForecast', () => {
 
 describe('unitsForLocale', () => {
   it.each([
-    ['en-US', 'imperial'],
-    ['en', 'imperial'],
-    ['en-GB', 'metric'],
-    ['tr-TR', 'metric'],
-    ['tr', 'metric'],
-    [undefined, 'metric'],
-    ['not a locale', 'metric'],
-  ] as const)('%s → %s', (locale, units) => {
-    expect(unitsForLocale(locale)).toBe(units);
+    ['en-US', undefined, 'imperial'],
+    ['en-US', 'America/Chicago', 'imperial'],
+    ['en-US', 'Pacific/Honolulu', 'imperial'],
+    ['en-US', 'Europe/Istanbul', 'metric'],
+    ['en', 'Asia/Tokyo', 'metric'],
+    ['en-GB', 'Europe/London', 'metric'],
+    ['tr-TR', 'Europe/Istanbul', 'metric'],
+    ['my-MM', 'Asia/Yangon', 'imperial'],
+    [undefined, undefined, 'metric'],
+    ['not a locale', undefined, 'metric'],
+  ] as const)('%s in %s → %s', (locale, zone, units) => {
+    expect(unitsForLocale(locale, zone)).toBe(units);
   });
 });

@@ -1,0 +1,126 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`shell completion > bash: prints a script that knows the commands 1`] = `
+"# skycast completion for bash (3.2 and later).
+# Load it in ~/.bashrc:  eval "$(skycast completion bash)"
+_skycast() {
+  local cur="\${COMP_WORDS[COMP_CWORD]}" prev="\${COMP_WORDS[COMP_CWORD-1]}"
+  local path="" skip=0 i word next words
+  for ((i = 1; i < COMP_CWORD; i++)); do
+    word="\${COMP_WORDS[i]}"
+    if ((skip)); then skip=0; continue; fi
+    case "$word" in
+      --units|-u|--lang|-l|--lat|--lon|--country|--days|-d|--hours|-H) skip=1 ;;
+      -*) ;;
+      *)
+        next="\${path:+$path }$word"
+        case "$next" in
+          now|current|forecast|hourly|compare|completion) path="$next" ;;
+        esac
+        ;;
+    esac
+  done
+  case "$prev" in
+    --units|-u) COMPREPLY=($(compgen -W "metric imperial" -- "$cur")); return ;;
+    --lang|-l) COMPREPLY=($(compgen -W "en tr" -- "$cur")); return ;;
+    --units|-u|--lang|-l|--lat|--lon|--country|--days|-d|--hours|-H) COMPREPLY=(); return ;;
+  esac
+  case "$path" in
+    "") words="now current forecast hourly compare completion --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose --help -h" ;;
+    "now") words="--lat --lon --country --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "current") words="--lat --lon --country --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "forecast") words="--days -d --lat --lon --country --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "hourly") words="--hours -H --lat --lon --country --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "compare") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "completion") words="bash zsh fish --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+  esac
+  COMPREPLY=($(compgen -W "$words" -- "$cur"))
+}
+complete -F _skycast skycast
+"
+`;
+
+exports[`shell completion > fish: prints a script that knows the commands 1`] = `
+"# skycast completion for fish.
+# Save it:  skycast completion fish > ~/.config/fish/completions/skycast.fish
+complete -c skycast -f
+complete -c skycast -s u -l units -x -a 'metric imperial' -d 'unit system'
+complete -c skycast -s l -l lang -x -a 'en tr' -d 'language'
+complete -c skycast -l json -d 'print JSON, for scripts'
+complete -c skycast -s c -l compact -d 'shorter output'
+complete -c skycast -l no-color -d 'plain text without colours'
+complete -c skycast -l ascii -d 'ASCII only, no Unicode symbols'
+complete -c skycast -l no-cache -d 'always fetch fresh data'
+complete -c skycast -l verbose -d 'explain what happens, on stderr'
+complete -c skycast -s h -l help -d 'show help'
+complete -c skycast -n '__fish_use_subcommand' -a now -d 'current weather'
+complete -c skycast -n '__fish_use_subcommand' -a current -d 'current weather'
+complete -c skycast -n '__fish_use_subcommand' -a forecast -d 'daily forecast'
+complete -c skycast -n '__fish_use_subcommand' -a hourly -d 'hour-by-hour forecast with charts'
+complete -c skycast -n '__fish_use_subcommand' -a compare -d 'compare places side by side'
+complete -c skycast -n '__fish_use_subcommand' -a completion -d 'print a shell completion script'
+complete -c skycast -n '__fish_seen_subcommand_from now' -l lat -x -d 'latitude, instead of a city'
+complete -c skycast -n '__fish_seen_subcommand_from now' -l lon -x -d 'longitude, instead of a city'
+complete -c skycast -n '__fish_seen_subcommand_from now' -l country -x -d 'only places in this country (ISO code, e.g. TR)'
+complete -c skycast -n '__fish_seen_subcommand_from now' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from current' -l lat -x -d 'latitude, instead of a city'
+complete -c skycast -n '__fish_seen_subcommand_from current' -l lon -x -d 'longitude, instead of a city'
+complete -c skycast -n '__fish_seen_subcommand_from current' -l country -x -d 'only places in this country (ISO code, e.g. TR)'
+complete -c skycast -n '__fish_seen_subcommand_from current' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from forecast' -s d -l days -x -d 'number of days, 1–16'
+complete -c skycast -n '__fish_seen_subcommand_from forecast' -l lat -x -d 'latitude, instead of a city'
+complete -c skycast -n '__fish_seen_subcommand_from forecast' -l lon -x -d 'longitude, instead of a city'
+complete -c skycast -n '__fish_seen_subcommand_from forecast' -l country -x -d 'only places in this country (ISO code, e.g. TR)'
+complete -c skycast -n '__fish_seen_subcommand_from forecast' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from hourly' -s H -l hours -x -d 'number of hours, 1–168'
+complete -c skycast -n '__fish_seen_subcommand_from hourly' -l lat -x -d 'latitude, instead of a city'
+complete -c skycast -n '__fish_seen_subcommand_from hourly' -l lon -x -d 'longitude, instead of a city'
+complete -c skycast -n '__fish_seen_subcommand_from hourly' -l country -x -d 'only places in this country (ISO code, e.g. TR)'
+complete -c skycast -n '__fish_seen_subcommand_from hourly' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from compare' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from completion' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish'
+"
+`;
+
+exports[`shell completion > zsh: prints a script that knows the commands 1`] = `
+"#compdef skycast
+# skycast completion for zsh.
+# Load it in ~/.zshrc:  source <(skycast completion zsh)
+# or save it on your fpath:  skycast completion zsh > "\${fpath[1]}/_skycast"
+_skycast() {
+  local curcontext="$curcontext" state line
+  typeset -A opt_args
+  local -a commands=('now:current weather' 'current:current weather' 'forecast:daily forecast' 'hourly:hour-by-hour forecast with charts' 'compare:compare places side by side' 'completion:print a shell completion script')
+  _arguments -C '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '1: :->command' '*:: :->args'
+  case $state in
+    command) _describe -t commands command commands ;;
+    args)
+      case $words[1] in
+        now|current)
+          _arguments '--lat[latitude, instead of a city]:lat: ' '--lon[longitude, instead of a city]:lon: ' '--country[only places in this country (ISO code, e.g. TR)]:country: ' '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '*: : '
+          ;;
+        forecast)
+          _arguments '(-d --days)'{-d,--days}'[number of days, 1–16]:days: ' '--lat[latitude, instead of a city]:lat: ' '--lon[longitude, instead of a city]:lon: ' '--country[only places in this country (ISO code, e.g. TR)]:country: ' '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '*: : '
+          ;;
+        hourly)
+          _arguments '(-H --hours)'{-H,--hours}'[number of hours, 1–168]:hours: ' '--lat[latitude, instead of a city]:lat: ' '--lon[longitude, instead of a city]:lon: ' '--country[only places in this country (ISO code, e.g. TR)]:country: ' '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '*: : '
+          ;;
+        compare)
+          _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '*: : '
+          ;;
+        completion)
+          _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '1: :(bash zsh fish)'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+if [ "$funcstack[1]" = "_skycast" ]; then
+  _skycast "$@"
+else
+  compdef _skycast skycast
+fi
+"
+`;

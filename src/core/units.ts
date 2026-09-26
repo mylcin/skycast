@@ -84,15 +84,42 @@ export function convertForecast(
   };
 }
 
-/** Countries that use Fahrenheit and miles in daily life. */
-const IMPERIAL_REGIONS = new Set(['US', 'LR', 'MM', 'BS', 'BZ', 'KY', 'PW']);
+/**
+ * Countries that use Fahrenheit and miles in daily life, with the time zones
+ * they span. Plenty of people outside the US keep an "en_US" locale, so the
+ * time zone has to agree before imperial units become the default.
+ */
+const IMPERIAL_ZONES: Record<string, readonly string[]> = {
+  US: [
+    'America/',
+    'US/',
+    'Pacific/Honolulu',
+    'Pacific/Guam',
+    'Pacific/Saipan',
+    'Pacific/Pago_Pago',
+  ],
+  LR: ['Africa/Monrovia'],
+  MM: ['Asia/Yangon', 'Asia/Rangoon'],
+  BS: ['America/Nassau'],
+  BZ: ['America/Belize'],
+  KY: ['America/Cayman'],
+  PW: ['Pacific/Palau'],
+};
 
-/** A sensible default from a BCP 47 locale such as "en-US". */
-export function unitsForLocale(locale: string | undefined): UnitSystem {
+/** A sensible default from a BCP 47 locale ("en-US") and an IANA time zone. */
+export function unitsForLocale(
+  locale: string | undefined,
+  timeZone?: string
+): UnitSystem {
   if (!locale) return 'metric';
   try {
     const region = new Intl.Locale(locale).maximize().region;
-    return region && IMPERIAL_REGIONS.has(region) ? 'imperial' : 'metric';
+    const zones = region ? IMPERIAL_ZONES[region] : undefined;
+    if (!zones) return 'metric';
+    if (!timeZone) return 'imperial';
+    return zones.some(zone => timeZone.startsWith(zone))
+      ? 'imperial'
+      : 'metric';
   } catch {
     return 'metric';
   }

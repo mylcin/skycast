@@ -92,10 +92,130 @@ export interface Messages {
     readonly today: string;
   };
 
+  readonly cli: CliMessages;
+
   /** Plain-text place for coordinates: "41.01°N, 28.95°E". */
   coordinates(latitude: string, longitude: string): string;
   readonly north: string;
   readonly south: string;
   readonly east: string;
   readonly west: string;
+}
+
+/** Help text, prompts, notices and errors of the command line. */
+export interface CliMessages {
+  readonly description: string;
+  /** Commander's section titles, keyed by the English original. */
+  readonly headings: Readonly<Record<string, string>>;
+  readonly examples: string;
+  helpChoices(choices: string): string;
+  helpDefault(value: string): string;
+  readonly options: {
+    readonly help: string;
+    readonly helpCommand: string;
+    readonly version: string;
+    readonly units: string;
+    readonly lang: string;
+    readonly json: string;
+    readonly noColor: string;
+    readonly compact: string;
+    readonly verbose: string;
+    readonly ascii: string;
+    readonly noCache: string;
+    readonly lat: string;
+    readonly lon: string;
+    readonly country: string;
+    readonly days: string;
+    readonly hours: string;
+  };
+  readonly arguments: {
+    readonly city: string;
+    readonly cities: string;
+    readonly shell: string;
+    readonly key: string;
+    readonly value: string;
+    readonly favorite: string;
+  };
+  readonly commands: {
+    readonly now: string;
+    readonly forecast: string;
+    readonly hourly: string;
+    readonly compare: string;
+    readonly config: string;
+    readonly configList: string;
+    readonly configGet: string;
+    readonly configSet: string;
+    readonly configUnset: string;
+    readonly configReset: string;
+    readonly configPath: string;
+    readonly fav: string;
+    readonly favAdd: string;
+    readonly favRemove: string;
+    readonly favList: string;
+    readonly completion: string;
+    readonly cache: string;
+    readonly cacheClear: string;
+  };
+
+  readonly fetching: string;
+  choosePlace(query: string): string;
+  bestGuess(place: string, query: string): string;
+  staleData(time: string, age: string): string;
+  minutesAgo(minutes: number): string;
+  hoursAgo(hours: number): string;
+  readonly noCity: string;
+  readonly latLonPair: string;
+  readonly cityOrCoordinates: string;
+  invalidLatitude(value: string): string;
+  invalidLongitude(value: string): string;
+  invalidInteger(value: string, min: number, max: number): string;
+  invalidCountry(value: string): string;
+  readonly compareNeedsTwo: string;
+  compareTooMany(max: number): string;
+  compareFailed(query: string, reason: string): string;
+  didYouMean(command: string): string;
+
+  readonly errors: {
+    notFound(query: string): string;
+    network(host: string): string;
+    timeout(host: string): string;
+    upstream(status: number, reason: string): string;
+    readonly rateLimited: string;
+    readonly invalidResponse: string;
+    config(path: string, detail: string): string;
+    internal(message: string): string;
+    readonly verboseHint: string;
+    readonly unknownOption: (option: string) => string;
+    readonly unknownCommand: (command: string) => string;
+    readonly missingArgument: (name: string) => string;
+    readonly optionMissingValue: (option: string) => string;
+    readonly tooManyArguments: string;
+    invalidChoice(value: string, choices: string): string;
+    suggestion(options: string): string;
+  };
+
+  readonly config: {
+    readonly keys: Readonly<Record<'city' | 'units' | 'lang', string>>;
+    readonly notSet: string;
+    readonly automatic: (value: string) => string;
+    saved(key: string, value: string): string;
+    cleared(key: string): string;
+    readonly reset: string;
+    unknownKey(key: string, keys: string): string;
+    invalidValue(key: string, value: string, allowed: string): string;
+  };
+
+  readonly favorites: {
+    added(place: string): string;
+    alreadyAdded(place: string): string;
+    removed(place: string): string;
+    notFound(ref: string): string;
+    readonly empty: string;
+  };
+
+  readonly home: {
+    readonly empty: string;
+  };
+
+  cacheCleared(count: number): string;
 }

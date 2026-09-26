@@ -16,6 +16,8 @@ export interface CliOptions {
   readonly tty?: boolean;
   readonly columns?: number;
   readonly colorDepth?: number;
+  /** Reuse settings and cache between runs (see tempHome). */
+  readonly home?: string;
 }
 
 /** A fresh, empty home for settings and cache. */
@@ -30,7 +32,7 @@ export async function runCli(
 ): Promise<CliResult> {
   let stdout = '';
   let stderr = '';
-  const home = tempHome();
+  const home = options.home ?? tempHome();
   const stream = (write: (text: string) => void) => ({
     write: (text: string) => {
       write(text);

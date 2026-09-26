@@ -180,6 +180,7 @@ export const tr: Messages = {
       completion: 'kabuk tamamlama betiğini yazdır',
       cache: 'önbelleği yönet',
       cacheClear: 'önbelleği temizle',
+      cachePath: 'önbelleğin nerede saklandığını göster',
     },
 
     fetching: 'Hava durumu alınıyor…',
@@ -255,6 +256,8 @@ export const tr: Messages = {
       removed: place => `${place} favorilerden çıkarıldı.`,
       notFound: ref =>
         `“${ref}” ile eşleşen bir favori yok. “skycast fav list” ile bakın.`,
+      ambiguous: ref =>
+        `“${ref}” birden fazla favoriyle eşleşiyor. “skycast fav list” çıktısındaki numarasıyla silin.`,
       empty:
         'Henüz favori yok. “skycast fav add İstanbul” ile ekleyebilirsiniz.',
     },

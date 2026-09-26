@@ -2,11 +2,23 @@ import {
   CommanderError,
   type CommandUnknownOpts,
 } from '@commander-js/extra-typings';
-import { ExitCode, UsageError } from '../core/errors.ts';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { ConfigError, ExitCode, UsageError } from '../core/errors.ts';
 import { getMessages, type Messages } from '../i18n/index.ts';
+import {
+  createConfigStore,
+  EMPTY_CONFIG,
+  type Config,
+} from '../infra/config-store.ts';
+import { createFileCache } from '../infra/file-cache.ts';
+import { resolvePaths } from '../infra/paths.ts';
 import { createPaint } from '../renderers/paint.ts';
-import { completionScript } from './completion.ts';
+import * as configCommands from './commands/config.ts';
+import * as favorites from './commands/favorites.ts';
+import { home } from './commands/home.ts';
 import * as weather from './commands/weather.ts';
+import { completionScript } from './completion.ts';
 import { describeError, translateCommanderError } from './errors.ts';
 import type { Hooks, Io } from './io.ts';
 import { buildProgram, type Actions } from './program.ts';
@@ -90,43 +102,111 @@ export async function run(
     verbose: argv.includes('--verbose'),
   };
   const errPaint = createPaint(colorLevel(io.stderr, io.env, early.color));
-  let t = getMessages(resolveLang({ flag: scanLang(argv), env: io.env }));
+  const paths = resolvePaths(io.env, io.platform, hooks.homedir ?? homedir());
+  const store = createConfigStore(join(paths.config, 'config.json'));
+  const fileCache = createFileCache(join(paths.cache, 'http'), hooks.now);
+
+  // A broken config file must not stop `config reset`, help or completion,
+  // so the error is kept and raised only by commands that read settings.
+  let config: Config = EMPTY_CONFIG;
+  let configError: ConfigError | undefined;
+  try {
+    config = await store.load();
+  } catch (error) {
+    if (!(error instanceof ConfigError)) throw error;
+    configError = error;
+  }
+  const settings = (): Config => {
+    if (configError) throw configError;
+    return config;
+  };
+
+  let t = getMessages(
+    resolveLang({ flag: scanLang(argv), env: io.env, saved: config.lang })
+  );
   let exitCode: number = ExitCode.ok;
 
   const session = (command: CommandUnknownOpts): Session => {
+    const { units, lang } = settings();
     const created = createSession({
       io,
       hooks,
       options: globalsOf(command),
-      saved: {},
-      cache: null,
+      saved: { units, lang },
+      cache: fileCache,
     });
     t = created.t;
     return created;
   };
+  const defaultCity = () => config.city;
+  const configCommand = (command: CommandUnknownOpts) => ({
+    session: session(command),
+    store,
+    config: settings(),
+    env: io.env,
+  });
 
   const actions: Actions = {
     async home(words, command) {
-      if (words.length === 0) {
-        command.outputHelp();
+      if (words.length > 0) {
+        checkTypo(words, command, t);
+        await weather.now(session(command), { words });
         return;
       }
-      checkTypo(words, command, t);
-      await weather.now(session(command), { words });
+      if (!(await home(session(command), settings()))) {
+        io.stdout.write(`${t.cli.home.empty}\n\n`);
+        command.outputHelp();
+      }
     },
     now: (words, flags, command) =>
-      weather.now(session(command), { words, ...flags }),
+      weather.now(session(command), { words, ...flags }, defaultCity),
     forecast: (words, flags, command) =>
-      weather.forecast(session(command), { words, ...flags }),
+      weather.forecast(session(command), { words, ...flags }, defaultCity),
     hourly: (words, flags, command) =>
-      weather.hourly(session(command), { words, ...flags }),
+      weather.hourly(session(command), { words, ...flags }, defaultCity),
     async compare(places, command) {
       exitCode = await weather.compare(session(command), places);
     },
     completion(shell, command) {
-      const root = command.parent ?? command;
-      io.stdout.write(completionScript(shell, root));
-      return Promise.resolve();
+      io.stdout.write(completionScript(shell, command.parent ?? command));
+    },
+    config: {
+      list: command => {
+        configCommands.list(configCommand(command));
+      },
+      get: (key, command) => {
+        configCommands.get(configCommand(command), key);
+      },
+      set: (key, value, command) =>
+        configCommands.set(configCommand(command), key, value),
+      unset: (key, command) =>
+        configCommands.unset(configCommand(command), key),
+      async reset() {
+        // Works on a broken file too: that is what it is for. Favourites
+        // survive a reset when the file could still be read.
+        if (configError) await store.remove();
+        else await store.save({ favorites: config.favorites });
+        io.stdout.write(`${t.cli.config.reset}\n`);
+      },
+      path() {
+        io.stdout.write(`${store.path}\n`);
+      },
+    },
+    favorites: {
+      add: (words, flags, command) =>
+        favorites.add(configCommand(command), words, flags.country),
+      remove: (ref, command) => favorites.remove(configCommand(command), ref),
+      list: command => {
+        favorites.list(configCommand(command));
+      },
+    },
+    cache: {
+      async clear() {
+        io.stdout.write(`${t.cli.cacheCleared(await fileCache.clear())}\n`);
+      },
+      path() {
+        io.stdout.write(`${fileCache.directory}\n`);
+      },
     },
   };
 

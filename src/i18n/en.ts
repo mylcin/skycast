@@ -180,6 +180,7 @@ export const en: Messages = {
       completion: 'print a shell completion script',
       cache: 'manage cached responses',
       cacheClear: 'delete cached responses',
+      cachePath: 'show where cached responses are stored',
     },
 
     fetching: 'Fetching the weather…',
@@ -251,6 +252,8 @@ export const en: Messages = {
       alreadyAdded: place => `${place} is already a favourite.`,
       removed: place => `Removed ${place} from favourites.`,
       notFound: ref => `No favourite matches “${ref}”. See “skycast fav list”.`,
+      ambiguous: ref =>
+        `More than one favourite matches “${ref}”. Remove it by its number from “skycast fav list”.`,
       empty: 'No favourites yet. Add one with “skycast fav add Istanbul”.',
     },
 

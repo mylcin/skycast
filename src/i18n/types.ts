@@ -155,6 +155,7 @@ export interface CliMessages {
     readonly completion: string;
     readonly cache: string;
     readonly cacheClear: string;
+    readonly cachePath: string;
   };
 
   readonly fetching: string;
@@ -210,6 +211,7 @@ export interface CliMessages {
     alreadyAdded(place: string): string;
     removed(place: string): string;
     notFound(ref: string): string;
+    ambiguous(ref: string): string;
     readonly empty: string;
   };
 

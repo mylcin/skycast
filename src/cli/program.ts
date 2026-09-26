@@ -7,6 +7,7 @@ import {
 } from '@commander-js/extra-typings';
 import type { Messages } from '../i18n/index.ts';
 import { NAME, VERSION } from '../version.ts';
+import { CONFIG_KEYS, type ConfigKey } from './commands/config.ts';
 import { SHELLS, type Shell } from './completion.ts';
 import { countryCode, integer, latitude, longitude } from './parsers.ts';
 
@@ -18,24 +19,49 @@ export interface LocationFlags {
 
 /** What each command does; kept apart so the tree can be built on its own. */
 export interface Actions {
-  home(words: string[], command: CommandUnknownOpts): Promise<void>;
+  home(words: string[], command: CommandUnknownOpts): void | Promise<void>;
   now(
     words: string[],
     flags: LocationFlags,
     command: CommandUnknownOpts
-  ): Promise<void>;
+  ): void | Promise<void>;
   forecast(
     words: string[],
     flags: LocationFlags & { days: number },
     command: CommandUnknownOpts
-  ): Promise<void>;
+  ): void | Promise<void>;
   hourly(
     words: string[],
     flags: LocationFlags & { hours: number },
     command: CommandUnknownOpts
-  ): Promise<void>;
-  compare(places: string[], command: CommandUnknownOpts): Promise<void>;
-  completion(shell: Shell, command: CommandUnknownOpts): Promise<void>;
+  ): void | Promise<void>;
+  compare(places: string[], command: CommandUnknownOpts): void | Promise<void>;
+  completion(shell: Shell, command: CommandUnknownOpts): void | Promise<void>;
+  config: {
+    list(command: CommandUnknownOpts): void | Promise<void>;
+    get(key: ConfigKey, command: CommandUnknownOpts): void | Promise<void>;
+    set(
+      key: ConfigKey,
+      value: string[],
+      command: CommandUnknownOpts
+    ): void | Promise<void>;
+    unset(key: ConfigKey, command: CommandUnknownOpts): void | Promise<void>;
+    reset(command: CommandUnknownOpts): void | Promise<void>;
+    path(command: CommandUnknownOpts): void | Promise<void>;
+  };
+  favorites: {
+    add(
+      words: string[],
+      flags: { country?: string | undefined },
+      command: CommandUnknownOpts
+    ): void | Promise<void>;
+    remove(ref: string, command: CommandUnknownOpts): void | Promise<void>;
+    list(command: CommandUnknownOpts): void | Promise<void>;
+  };
+  cache: {
+    clear(command: CommandUnknownOpts): void | Promise<void>;
+    path(command: CommandUnknownOpts): void | Promise<void>;
+  };
 }
 
 const EXAMPLES = [
@@ -45,6 +71,8 @@ const EXAMPLES = [
   'skycast compare Istanbul Ankara Izmir',
   'skycast now --lat 41.01 --lon 28.95 --json',
   'skycast now Berlin --units imperial --lang tr',
+  'skycast config set city Istanbul',
+  'skycast fav add "Paris, France"',
 ];
 
 export interface ProgramOptions {
@@ -167,6 +195,78 @@ export function buildProgram({
     .description(c.compare)
     .argument('<places...>', a.cities)
     .action((places, _options, command) => actions.compare(places, command));
+
+  const key = () => new Argument('<key>', a.key).choices(CONFIG_KEYS);
+  const config = program
+    .command('config')
+    .description(c.config)
+    .action((_options, command) => actions.config.list(command));
+  config
+    .command('list')
+    .alias('ls')
+    .description(c.configList)
+    .action((_options, command) => actions.config.list(command));
+  config
+    .command('get')
+    .description(c.configGet)
+    .addArgument(key())
+    .action((name, _options, command) => actions.config.get(name, command));
+  config
+    .command('set')
+    .description(c.configSet)
+    .addArgument(key())
+    .argument('<value...>', a.value)
+    .action((name, value, _options, command) =>
+      actions.config.set(name, value, command)
+    );
+  config
+    .command('unset')
+    .description(c.configUnset)
+    .addArgument(key())
+    .action((name, _options, command) => actions.config.unset(name, command));
+  config
+    .command('reset')
+    .description(c.configReset)
+    .action((_options, command) => actions.config.reset(command));
+  config
+    .command('path')
+    .description(c.configPath)
+    .action((_options, command) => actions.config.path(command));
+
+  const favorites = program
+    .command('fav')
+    .alias('favorites')
+    .description(c.fav)
+    .action((_options, command) => actions.favorites.list(command));
+  favorites
+    .command('add')
+    .description(c.favAdd)
+    .argument('<place...>', a.city)
+    .addOption(country())
+    .action((words, flags, command) =>
+      actions.favorites.add(words, flags, command)
+    );
+  favorites
+    .command('remove')
+    .alias('rm')
+    .description(c.favRemove)
+    .argument('<favorite>', a.favorite)
+    .action((ref, _options, command) => actions.favorites.remove(ref, command));
+  favorites
+    .command('list')
+    .alias('ls')
+    .description(c.favList)
+    .action((_options, command) => actions.favorites.list(command));
+
+  const cache = program.command('cache').description(c.cache);
+  cache
+    .command('clear')
+    .description(c.cacheClear)
+    .action((_options, command) => actions.cache.clear(command));
+  cache
+    .command('path')
+    .description(c.cachePath)
+    .action((_options, command) => actions.cache.path(command));
 
   program
     .command('completion')

@@ -22,10 +22,16 @@ import { fitLine, joinFitting, sideBySide } from './text.ts';
 /** Below this width the picture is left out. */
 const PICTURE_MIN_WIDTH = 56;
 
+export interface CurrentOptions {
+  /** Leave out the data credits when another view follows with them. */
+  readonly credits?: boolean;
+}
+
 /** The `now` view: picture, conditions, today's range and sun times. */
 export function renderCurrent(
   report: WeatherReport,
-  ctx: RenderContext
+  ctx: RenderContext,
+  options: CurrentOptions = {}
 ): string {
   const { t, paint, symbols } = ctx;
   const current = report.current;
@@ -139,8 +145,9 @@ export function renderCurrent(
       ...header(report, ctx),
       '',
       ...body,
-      '',
-      ...footer(report.attribution, ctx),
+      ...(options.credits === false
+        ? []
+        : ['', ...footer(report.attribution, ctx)]),
     ].join('\n') + '\n'
   );
 }

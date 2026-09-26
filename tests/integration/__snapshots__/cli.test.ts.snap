@@ -15,7 +15,7 @@ _skycast() {
       *)
         next="\${path:+$path }$word"
         case "$next" in
-          now|current|forecast|hourly|compare|completion) path="$next" ;;
+          now|current|forecast|hourly|compare|config|config\\ list|config\\ ls|config\\ get|config\\ set|config\\ unset|config\\ reset|config\\ path|fav|fav\\ add|fav\\ remove|fav\\ rm|fav\\ list|fav\\ ls|favorites|favorites\\ add|favorites\\ remove|favorites\\ rm|favorites\\ list|favorites\\ ls|cache|cache\\ clear|cache\\ path|completion) path="$next" ;;
         esac
         ;;
     esac
@@ -26,12 +26,35 @@ _skycast() {
     --units|-u|--lang|-l|--lat|--lon|--country|--days|-d|--hours|-H) COMPREPLY=(); return ;;
   esac
   case "$path" in
-    "") words="now current forecast hourly compare completion --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose --help -h" ;;
+    "") words="now current forecast hourly compare config fav favorites cache completion --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose --help -h" ;;
     "now") words="--lat --lon --country --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
     "current") words="--lat --lon --country --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
     "forecast") words="--days -d --lat --lon --country --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
     "hourly") words="--hours -H --lat --lon --country --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
     "compare") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "config") words="list ls get set unset reset path --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "config list") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "config ls") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "config get") words="city units lang --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "config set") words="city units lang --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "config unset") words="city units lang --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "config reset") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "config path") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "fav") words="add remove rm list ls --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "fav add") words="--country --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "fav remove") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "fav rm") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "fav list") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "fav ls") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "favorites") words="add remove rm list ls --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "favorites add") words="--country --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "favorites remove") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "favorites rm") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "favorites list") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "favorites ls") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "cache") words="clear path --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "cache clear") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
+    "cache path") words="--help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
     "completion") words="bash zsh fish --help -h --units -u --lang -l --json --compact -c --no-color --ascii --no-cache --verbose" ;;
   esac
   COMPREPLY=($(compgen -W "$words" -- "$cur"))
@@ -58,6 +81,10 @@ complete -c skycast -n '__fish_use_subcommand' -a current -d 'current weather'
 complete -c skycast -n '__fish_use_subcommand' -a forecast -d 'daily forecast'
 complete -c skycast -n '__fish_use_subcommand' -a hourly -d 'hour-by-hour forecast with charts'
 complete -c skycast -n '__fish_use_subcommand' -a compare -d 'compare places side by side'
+complete -c skycast -n '__fish_use_subcommand' -a config -d 'show or change settings'
+complete -c skycast -n '__fish_use_subcommand' -a fav -d 'manage favourite places'
+complete -c skycast -n '__fish_use_subcommand' -a favorites -d 'manage favourite places'
+complete -c skycast -n '__fish_use_subcommand' -a cache -d 'manage cached responses'
 complete -c skycast -n '__fish_use_subcommand' -a completion -d 'print a shell completion script'
 complete -c skycast -n '__fish_seen_subcommand_from now' -l lat -x -d 'latitude, instead of a city'
 complete -c skycast -n '__fish_seen_subcommand_from now' -l lon -x -d 'longitude, instead of a city'
@@ -78,6 +105,53 @@ complete -c skycast -n '__fish_seen_subcommand_from hourly' -l lon -x -d 'longit
 complete -c skycast -n '__fish_seen_subcommand_from hourly' -l country -x -d 'only places in this country (ISO code, e.g. TR)'
 complete -c skycast -n '__fish_seen_subcommand_from hourly' -s h -l help -d 'show help'
 complete -c skycast -n '__fish_seen_subcommand_from compare' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from list ls get set unset reset path' -a list -d 'show all settings'
+complete -c skycast -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from list ls get set unset reset path' -a ls -d 'show all settings'
+complete -c skycast -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from list ls get set unset reset path' -a get -d 'show one setting'
+complete -c skycast -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from list ls get set unset reset path' -a set -d 'change a setting'
+complete -c skycast -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from list ls get set unset reset path' -a unset -d 'go back to the default for a setting'
+complete -c skycast -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from list ls get set unset reset path' -a reset -d 'go back to the defaults for everything'
+complete -c skycast -n '__fish_seen_subcommand_from config; and not __fish_seen_subcommand_from list ls get set unset reset path' -a path -d 'show where settings are stored'
+complete -c skycast -n '__fish_seen_subcommand_from config' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from list' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from ls' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from get' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from get' -a 'city units lang'
+complete -c skycast -n '__fish_seen_subcommand_from set' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from set' -a 'city units lang'
+complete -c skycast -n '__fish_seen_subcommand_from unset' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from unset' -a 'city units lang'
+complete -c skycast -n '__fish_seen_subcommand_from reset' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from path' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from fav; and not __fish_seen_subcommand_from add remove rm list ls' -a add -d 'add a favourite'
+complete -c skycast -n '__fish_seen_subcommand_from fav; and not __fish_seen_subcommand_from add remove rm list ls' -a remove -d 'remove a favourite'
+complete -c skycast -n '__fish_seen_subcommand_from fav; and not __fish_seen_subcommand_from add remove rm list ls' -a rm -d 'remove a favourite'
+complete -c skycast -n '__fish_seen_subcommand_from fav; and not __fish_seen_subcommand_from add remove rm list ls' -a list -d 'list favourites'
+complete -c skycast -n '__fish_seen_subcommand_from fav; and not __fish_seen_subcommand_from add remove rm list ls' -a ls -d 'list favourites'
+complete -c skycast -n '__fish_seen_subcommand_from fav' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from add' -l country -x -d 'only places in this country (ISO code, e.g. TR)'
+complete -c skycast -n '__fish_seen_subcommand_from add' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from remove' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from rm' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from list' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from ls' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from favorites; and not __fish_seen_subcommand_from add remove rm list ls' -a add -d 'add a favourite'
+complete -c skycast -n '__fish_seen_subcommand_from favorites; and not __fish_seen_subcommand_from add remove rm list ls' -a remove -d 'remove a favourite'
+complete -c skycast -n '__fish_seen_subcommand_from favorites; and not __fish_seen_subcommand_from add remove rm list ls' -a rm -d 'remove a favourite'
+complete -c skycast -n '__fish_seen_subcommand_from favorites; and not __fish_seen_subcommand_from add remove rm list ls' -a list -d 'list favourites'
+complete -c skycast -n '__fish_seen_subcommand_from favorites; and not __fish_seen_subcommand_from add remove rm list ls' -a ls -d 'list favourites'
+complete -c skycast -n '__fish_seen_subcommand_from favorites' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from add' -l country -x -d 'only places in this country (ISO code, e.g. TR)'
+complete -c skycast -n '__fish_seen_subcommand_from add' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from remove' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from rm' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from list' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from ls' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from cache; and not __fish_seen_subcommand_from clear path' -a clear -d 'delete cached responses'
+complete -c skycast -n '__fish_seen_subcommand_from cache; and not __fish_seen_subcommand_from clear path' -a path -d 'show where cached responses are stored'
+complete -c skycast -n '__fish_seen_subcommand_from cache' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from clear' -s h -l help -d 'show help'
+complete -c skycast -n '__fish_seen_subcommand_from path' -s h -l help -d 'show help'
 complete -c skycast -n '__fish_seen_subcommand_from completion' -s h -l help -d 'show help'
 complete -c skycast -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish'
 "
@@ -91,7 +165,7 @@ exports[`shell completion > zsh: prints a script that knows the commands 1`] = `
 _skycast() {
   local curcontext="$curcontext" state line
   typeset -A opt_args
-  local -a commands=('now:current weather' 'current:current weather' 'forecast:daily forecast' 'hourly:hour-by-hour forecast with charts' 'compare:compare places side by side' 'completion:print a shell completion script')
+  local -a commands=('now:current weather' 'current:current weather' 'forecast:daily forecast' 'hourly:hour-by-hour forecast with charts' 'compare:compare places side by side' 'config:show or change settings' 'fav:manage favourite places' 'favorites:manage favourite places' 'cache:manage cached responses' 'completion:print a shell completion script')
   _arguments -C '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '1: :->command' '*:: :->args'
   case $state in
     command) _describe -t commands command commands ;;
@@ -108,6 +182,72 @@ _skycast() {
           ;;
         compare)
           _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '*: : '
+          ;;
+        config)
+          local -a commands=('list:show all settings' 'ls:show all settings' 'get:show one setting' 'set:change a setting' 'unset:go back to the default for a setting' 'reset:go back to the defaults for everything' 'path:show where settings are stored')
+          _arguments -C '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '1: :->command' '*:: :->args'
+          case $state in
+            command) _describe -t commands command commands ;;
+            args)
+              case $words[1] in
+                list|ls)
+                  _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '*: : '
+                  ;;
+                get)
+                  _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '1: :(city units lang)'
+                  ;;
+                set)
+                  _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '1: :(city units lang)'
+                  ;;
+                unset)
+                  _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '1: :(city units lang)'
+                  ;;
+                reset)
+                  _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '*: : '
+                  ;;
+                path)
+                  _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '*: : '
+                  ;;
+              esac
+              ;;
+          esac
+          ;;
+        fav|favorites)
+          local -a commands=('add:add a favourite' 'remove:remove a favourite' 'rm:remove a favourite' 'list:list favourites' 'ls:list favourites')
+          _arguments -C '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '1: :->command' '*:: :->args'
+          case $state in
+            command) _describe -t commands command commands ;;
+            args)
+              case $words[1] in
+                add)
+                  _arguments '--country[only places in this country (ISO code, e.g. TR)]:country: ' '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '*: : '
+                  ;;
+                remove|rm)
+                  _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '*: : '
+                  ;;
+                list|ls)
+                  _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '*: : '
+                  ;;
+              esac
+              ;;
+          esac
+          ;;
+        cache)
+          local -a commands=('clear:delete cached responses' 'path:show where cached responses are stored')
+          _arguments -C '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '1: :->command' '*:: :->args'
+          case $state in
+            command) _describe -t commands command commands ;;
+            args)
+              case $words[1] in
+                clear)
+                  _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '*: : '
+                  ;;
+                path)
+                  _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '*: : '
+                  ;;
+              esac
+              ;;
+          esac
           ;;
         completion)
           _arguments '(-h --help)'{-h,--help}'[show help]' '(-u --units)'{-u,--units}'[unit system]:units:(metric imperial)' '(-l --lang)'{-l,--lang}'[language]:lang:(en tr)' '--json[print JSON, for scripts]' '(-c --compact)'{-c,--compact}'[shorter output]' '--no-color[plain text without colours]' '--ascii[ASCII only, no Unicode symbols]' '--no-cache[always fetch fresh data]' '--verbose[explain what happens, on stderr]' '(-h --help)'{-h,--help}'[show help]' '1: :(bash zsh fish)'

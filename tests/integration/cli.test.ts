@@ -468,37 +468,44 @@ describe('shell completion', () => {
     }
   );
 
-  it.each(shells)('%s: the script is valid shell syntax', async shell => {
-    if (!has(shell)) return;
-    const { stdout } = await runCli(['completion', shell]);
-    const file = join(
-      mkdtempSync(join(tmpdir(), 'skycast-completion-')),
-      `script.${shell}`
-    );
-    writeFileSync(file, stdout);
-    expect(() =>
-      execFileSync(shell, [...syntaxCheck[shell], file], { stdio: 'pipe' })
-    ).not.toThrow();
-  });
+  it.skipIf(process.platform === 'win32').each(shells)(
+    '%s: the script is valid shell syntax',
+    async shell => {
+      if (!has(shell)) return;
+      const { stdout } = await runCli(['completion', shell]);
+      const file = join(
+        mkdtempSync(join(tmpdir(), 'skycast-completion-')),
+        `script.${shell}`
+      );
+      writeFileSync(file, stdout);
+      expect(() =>
+        execFileSync(shell, [...syntaxCheck[shell], file], { stdio: 'pipe' })
+      ).not.toThrow();
+    }
+  );
 
-  it('bash: completes commands, options and choices', async () => {
-    if (!has('bash')) return;
-    const { stdout } = await runCli(['completion', 'bash']);
-    const dir = mkdtempSync(join(tmpdir(), 'skycast-completion-'));
-    writeFileSync(join(dir, 'skycast.bash'), stdout);
-    const complete = (line: string) =>
-      execFileSync(
-        'bash',
-        [
-          '-c',
-          `source "${join(dir, 'skycast.bash')}"; COMP_WORDS=(${line}); COMP_CWORD=$((\${#COMP_WORDS[@]} - 1)); _skycast; echo "\${COMPREPLY[*]}"`,
-        ],
-        { encoding: 'utf8' }
-      ).trim();
-    expect(complete('skycast fo')).toBe('forecast');
-    expect(complete('skycast forecast --d')).toBe('--days');
-    expect(complete('skycast --units m')).toBe('metric');
-    expect(complete('skycast --units metric hou')).toBe('hourly');
-    expect(complete('skycast completion f')).toBe('fish');
-  });
+  // Git Bash on Windows is not the bash these scripts target.
+  it.skipIf(process.platform === 'win32')(
+    'bash: completes commands, options and choices',
+    async () => {
+      if (!has('bash')) return;
+      const { stdout } = await runCli(['completion', 'bash']);
+      const dir = mkdtempSync(join(tmpdir(), 'skycast-completion-'));
+      writeFileSync(join(dir, 'skycast.bash'), stdout);
+      const complete = (line: string) =>
+        execFileSync(
+          'bash',
+          [
+            '-c',
+            `source "${join(dir, 'skycast.bash')}"; COMP_WORDS=(${line}); COMP_CWORD=$((\${#COMP_WORDS[@]} - 1)); _skycast; echo "\${COMPREPLY[*]}"`,
+          ],
+          { encoding: 'utf8' }
+        ).trim();
+      expect(complete('skycast fo')).toBe('forecast');
+      expect(complete('skycast forecast --d')).toBe('--days');
+      expect(complete('skycast --units m')).toBe('metric');
+      expect(complete('skycast --units metric hou')).toBe('hourly');
+      expect(complete('skycast completion f')).toBe('fish');
+    }
+  );
 });

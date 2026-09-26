@@ -1,0 +1,28 @@
+name: Demo GIF
+
+# Records docs/demo.gif from demo/demo.tape against the fixture server, so
+# the recording is the same every time. Run it by hand after UI changes.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: charmbracelet/vhs-action@v2
+        with:
+          path: demo/demo.tape
+      - uses: actions/upload-artifact@v7
+        with:
+          name: demo
+          path: docs/demo.gif

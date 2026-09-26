@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+  # npm trusted publishing (OIDC): no npm token is stored in the repository,
+  # and every release gets a provenance statement.
+  id-token: write
+
+jobs:
+  release:
+    name: Version or publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Node 24 ships npm 11, which trusted publishing needs.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - uses: changesets/action@v2
+        with:
+          version: npx changeset version
+          publish: npm run release
+          commit: 'chore: version packages'
+          title: 'chore: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

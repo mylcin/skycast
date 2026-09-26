@@ -1,0 +1,33 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      commander:
+        patterns: ['commander', '@commander-js/extra-typings']
+      lint:
+        patterns: ['eslint', '@eslint/*', 'typescript-eslint', 'prettier']
+      test:
+        patterns: ['vitest', '@vitest/*', 'msw']
+    ignore:
+      # These majors drop Node 20, which skycast still supports.
+      - dependency-name: commander
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@commander-js/extra-typings'
+        update-types: ['version-update:semver-major']
+      - dependency-name: vitest
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@vitest/coverage-v8'
+        update-types: ['version-update:semver-major']
+      # Types must match the oldest supported Node.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+      # typescript-eslint does not support TypeScript 7 yet.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

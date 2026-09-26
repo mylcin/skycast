@@ -1,0 +1,22 @@
+name: Feature request
+description: An idea for skycast
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to do?
+      description: Describe the situation, not only the solution. What are you trying to get out of the terminal?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: How could it work?
+      description: A command or flag you have in mind, and example output if you like.
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Fit
+      options:
+        - label: This works without an API key (skycast only uses free, keyless data sources).

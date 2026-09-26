@@ -1,0 +1,47 @@
+name: Bug report
+description: Something skycast does wrong
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: The command you ran, what you saw, and what you expected instead.
+      placeholder: |
+        skycast forecast "Paris, France" --days 3
+        …
+    validations:
+      required: true
+  - type: textarea
+    id: verbose
+    attributes:
+      label: Output with --verbose
+      description: Run the same command with `--verbose` and paste stderr. It shows the requests skycast made.
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: skycast version
+      placeholder: skycast --version
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      placeholder: node --version
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [macOS, Linux, Windows, Other]
+    validations:
+      required: true
+  - type: input
+    id: terminal
+    attributes:
+      label: Terminal
+      description: For layout or colour problems.
+      placeholder: iTerm2, Windows Terminal, GNOME Terminal…

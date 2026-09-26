@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   HANGING_LATITUDE,
@@ -14,10 +15,7 @@ import pkg from '../../package.json' with { type: 'json' };
  * Runs the built, bundled CLI as a real child process on the current Node
  * version, against a local fixture server. `npm run build` first.
  */
-const CLI = new URL('../../dist/cli.mjs', import.meta.url).pathname.replace(
-  /^\/([A-Za-z]:)/,
-  '$1'
-);
+const CLI = fileURLToPath(new URL('../../dist/cli.mjs', import.meta.url));
 
 let server: FixtureServer;
 

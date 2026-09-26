@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, types, format, package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run format:check
+      - name: Build (runs publint)
+        run: npm run build
+      - name: Check what npm would publish
+        run: npm pack --dry-run
+      - name: Conventional commit messages
+        if: github.event_name == 'pull_request'
+        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
+
+  build:
+    name: Build once
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist
+          retention-days: 3
+
+  test:
+    name: Test (Node ${{ matrix.node }}, ${{ matrix.os }})
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [20, 22, 24]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      # Some dev tools need Node 22+ and only warn on 20; the tests themselves
+      # and the shipped bundle run on every version in the matrix.
+      - run: npm ci
+      - name: Shells for completion syntax checks
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y zsh fish
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+      - name: Unit and integration tests
+        run: npm test
+      - name: End-to-end tests on the bundle
+        run: npm run test:e2e
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run coverage
+      - uses: actions/upload-artifact@v7
+        with:
+          name: coverage
+          path: coverage
+          retention-days: 7
+
+  install:
+    name: Install the tarball (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm pack
+      - name: Install globally into a scratch prefix and run it
+        shell: bash
+        run: |
+          prefix="$RUNNER_TEMP/prefix"
+          npm install --global --prefix "$prefix" ./skycast-*.tgz
+          if [ "$RUNNER_OS" = "Windows" ]; then bin="$prefix/skycast.cmd"; else bin="$prefix/bin/skycast"; fi
+          "$bin" --version
+          "$bin" completion bash > /dev/null

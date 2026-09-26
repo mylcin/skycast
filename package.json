@@ -48,10 +48,15 @@
     "changeset": "changeset",
     "release": "npm run build && changeset publish",
     "prepack": "npm run build",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "screenshots": "node scripts/screenshot.ts",
+    "fixtures:serve": "node scripts/fixture-server.ts"
   },
   "engines": {
     "node": "^20.19.0 || >=22.13.0"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^1.0.1",

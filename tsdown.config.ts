@@ -10,6 +10,7 @@ export default defineConfig({
   clean: true,
   dts: false,
   sourcemap: false,
+  minify: true,
   // Everything is bundled: the published package has no runtime dependencies,
   // installs in one small tarball and starts faster than an unbundled tree.
   // Runtime libraries are devDependencies for that reason.

@@ -28,7 +28,8 @@ export default defineConfig({
       // The entry file only wires process globals into run(); run() is covered.
       exclude: ['src/cli.ts'],
       reporter: ['text', 'html', 'lcov'],
-      thresholds: { lines: 80, statements: 80, functions: 80, branches: 75 },
+      // The brief asks for 80%+; the bar sits just under today's numbers so it only ratchets up.
+      thresholds: { lines: 95, statements: 95, functions: 95, branches: 85 },
     },
   },
 });

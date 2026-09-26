@@ -1,0 +1,82 @@
+{
+  "name": "skycast",
+  "version": "0.0.0",
+  "description": "Weather in your terminal: ASCII art, color-coded temperatures, forecasts and side-by-side city comparisons. No API key needed.",
+  "keywords": [
+    "weather",
+    "forecast",
+    "cli",
+    "terminal",
+    "ascii-art",
+    "open-meteo",
+    "sparkline",
+    "command-line"
+  ],
+  "homepage": "https://github.com/mylcin/weather-cli#readme",
+  "bugs": {
+    "url": "https://github.com/mylcin/weather-cli/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mylcin/weather-cli.git"
+  },
+  "license": "MIT",
+  "author": "Mustafa Yalçın (https://mylcin.vercel.app)",
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "skycast": "dist/cli.mjs"
+  },
+  "files": [
+    "dist",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "dev": "node src/cli.ts",
+    "build": "tsdown",
+    "typecheck": "tsc",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run --project unit",
+    "test:watch": "vitest --project unit",
+    "test:e2e": "vitest run --project e2e",
+    "coverage": "vitest run --project unit --coverage",
+    "check": "npm run lint && npm run typecheck && npm run format:check && npm test",
+    "changeset": "changeset",
+    "release": "npm run build && changeset publish",
+    "prepack": "npm run build",
+    "prepare": "lefthook install"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.13.0"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^1.0.1",
+    "@changesets/cli": "^3.0.3",
+    "@commander-js/extra-typings": "~14.0.0",
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "@eslint/js": "^10.0.1",
+    "@inquirer/select": "^5.2.5",
+    "@types/node": "~20.19.43",
+    "@vitest/coverage-v8": "~4.1.11",
+    "ansis": "^4.4.0",
+    "commander": "~14.0.3",
+    "eslint": "^10.11.0",
+    "fast-string-width": "^3.0.2",
+    "fast-wrap-ansi": "^0.2.2",
+    "lefthook": "^2.1.14",
+    "msw": "^2.15.0",
+    "prettier": "^3.9.9",
+    "publint": "^0.3.24",
+    "tsdown": "^0.23.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.70.1",
+    "vitest": "~4.1.11",
+    "yocto-spinner": "^1.2.2",
+    "zod": "^4.6.5"
+  }
+}

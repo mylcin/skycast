@@ -1,0 +1,6 @@
+dist
+coverage
+package-lock.json
+CHANGELOG.md
+tests/**/__snapshots__
+tests/fixtures

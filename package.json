@@ -1,6 +1,6 @@
 {
   "name": "skycast",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Weather in your terminal: ASCII art, color-coded temperatures, forecasts and side-by-side city comparisons. No API key needed.",
   "keywords": [
     "weather",

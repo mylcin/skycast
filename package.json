@@ -12,13 +12,13 @@
     "sparkline",
     "command-line"
   ],
-  "homepage": "https://github.com/mylcin/weather-cli#readme",
+  "homepage": "https://github.com/mylcin/skycast#readme",
   "bugs": {
-    "url": "https://github.com/mylcin/weather-cli/issues"
+    "url": "https://github.com/mylcin/skycast/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mylcin/weather-cli.git"
+    "url": "git+https://github.com/mylcin/skycast.git"
   },
   "license": "MIT",
   "author": "Mustafa Yalçın (https://mylcin.vercel.app)",

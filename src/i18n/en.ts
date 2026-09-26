@@ -250,7 +250,7 @@ export const en: Messages = {
         `No place called “${query}”. Check the spelling.`,
       internal: message => `Something went wrong: ${message}`,
       verboseHint:
-        'Run it again with --verbose for details, and report it at https://github.com/mylcin/weather-cli/issues',
+        'Run it again with --verbose for details, and report it at https://github.com/mylcin/skycast/issues',
       unknownOption: option => `unknown option ${option}`,
       unknownCommand: command => `unknown command “${command}”`,
       missingArgument: name => `missing ${name}`,

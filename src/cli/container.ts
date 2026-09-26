@@ -35,7 +35,7 @@ export function createServices({
   log,
 }: ServiceOptions): Services {
   const http = createHttpClient({
-    userAgent: `skycast/${VERSION} (+https://github.com/mylcin/weather-cli)`,
+    userAgent: `skycast/${VERSION} (+https://github.com/mylcin/skycast)`,
     cache,
     log,
     ...(hooks.fetch && { fetch: hooks.fetch }),

@@ -252,7 +252,7 @@ export const tr: Messages = {
         `“${query}” adında bir yer bulunamadı. Yazımı kontrol edin.`,
       internal: message => `Bir şeyler ters gitti: ${message}`,
       verboseHint:
-        'Ayrıntılar için --verbose ile yeniden çalıştırın ve lütfen bildirin: https://github.com/mylcin/weather-cli/issues',
+        'Ayrıntılar için --verbose ile yeniden çalıştırın ve lütfen bildirin: https://github.com/mylcin/skycast/issues',
       unknownOption: option => `bilinmeyen seçenek: ${option}`,
       unknownCommand: command => `bilinmeyen komut: “${command}”`,
       missingArgument: name => `${name} eksik`,

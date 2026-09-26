@@ -7,8 +7,8 @@ shape before you spend time on it.
 ## Setup
 
 ```sh
-git clone https://github.com/mylcin/weather-cli.git
-cd weather-cli
+git clone https://github.com/mylcin/skycast.git
+cd skycast
 nvm use          # Node 22.18 or later: the build and release tools need it
 npm install      # also installs the git hooks (lefthook)
 ```
@@ -129,7 +129,7 @@ npm publish --access public
 ```
 
 Then, on npmjs.com, add a trusted publisher for the package: GitHub
-Actions, repository `mylcin/weather-cli`, workflow `release.yml`.
+Actions, repository `mylcin/skycast`, workflow `release.yml`.
 
 ## Recording the demo
 

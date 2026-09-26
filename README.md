@@ -4,7 +4,7 @@ Weather in your terminal: ASCII art, colour-coded temperatures, daily and
 hourly forecasts, and side-by-side city comparisons. Any place on Earth, no
 API key.
 
-[![CI](https://github.com/mylcin/weather-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/mylcin/weather-cli/actions/workflows/ci.yml)
+[![CI](https://github.com/mylcin/skycast/actions/workflows/ci.yml/badge.svg)](https://github.com/mylcin/skycast/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/skycast)](https://www.npmjs.com/package/skycast)
 [![Node](https://img.shields.io/node/v/skycast)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -380,8 +380,8 @@ compiled into it, and their licences ship alongside in
 ## Development
 
 ```sh
-git clone https://github.com/mylcin/weather-cli.git
-cd weather-cli
+git clone https://github.com/mylcin/skycast.git
+cd skycast
 nvm use               # Node 22.18+ for the dev tools; the CLI itself runs on 20.19+
 npm install           # also installs the git hooks
 npm run dev -- now Istanbul

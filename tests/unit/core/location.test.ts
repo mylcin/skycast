@@ -3,6 +3,7 @@ import {
   coordinateLocation,
   isSamePlace,
   isValidCoordinates,
+  matchesQualifier,
   normalizeName,
   rankCandidates,
   splitQuery,
@@ -16,6 +17,13 @@ describe('normalizeName', () => {
     expect(normalizeName('Eskişehir')).toBe('eskisehir');
     expect(normalizeName('Iğdır')).toBe('igdir');
     expect(normalizeName('  São   Paulo ')).toBe('sao paulo');
+  });
+
+  it('folds letters that Unicode does not decompose', () => {
+    expect(normalizeName('Łódź')).toBe('lodz');
+    expect(normalizeName('Gießen')).toBe('giessen');
+    expect(normalizeName('Đà Nẵng')).toBe('da nang');
+    expect(normalizeName('Bodø')).toBe('bodo');
   });
 });
 
@@ -57,6 +65,54 @@ describe('rankCandidates (real geocoding results)', () => {
     const { ambiguous, places } = rank(fixture, query);
     expect(ambiguous).toBe(false);
     expect(places[0]?.name).toBe(name);
+  });
+
+  it('keeps the city the API matched by another name (Praha → Prague)', () => {
+    const { places, ambiguous } = rank('geo-praha-en', 'Praha');
+    expect(places[0]).toMatchObject({ name: 'Prague', countryCode: 'CZ' });
+    expect(ambiguous).toBe(false);
+  });
+
+  it('matches a native spelling to the city (Łódź → Lodz)', () => {
+    const { places } = rank('geo-lodz-en', 'Łódź');
+    expect(places[0]).toMatchObject({ name: 'Lodz', featureCode: 'PPLA' });
+  });
+
+  it('keeps a country asked for by name over small namesakes', () => {
+    const mexico = rank('geo-mexico-en', 'Mexico');
+    expect(mexico.ambiguous).toBe(false);
+    expect(mexico.places[0]).toMatchObject({
+      name: 'Mexico',
+      featureCode: 'PCLI',
+    });
+    expect(rank('geo-georgia-en', 'Georgia').places[0]).toMatchObject({
+      countryCode: 'GE',
+      featureCode: 'PCLI',
+    });
+  });
+
+  it('ranks places with a known population first', () => {
+    const { places } = rankCandidates(
+      [
+        {
+          name: 'Bombay',
+          latitude: 1,
+          longitude: 1,
+          featureCode: 'PPL',
+          region: 'New York',
+        },
+        {
+          name: 'Bombay',
+          latitude: 2,
+          longitude: 2,
+          featureCode: 'PPL',
+          region: 'Auckland',
+          population: 740,
+        },
+      ],
+      'Bombay'
+    );
+    expect(places.map(p => p.region)).toEqual(['Auckland']);
   });
 
   it('puts the most relevant place first and drops unknown namesakes', () => {
@@ -105,6 +161,41 @@ describe('rankCandidates (real geocoding results)', () => {
 
   it('handles no results', () => {
     expect(rankCandidates([], 'x')).toEqual({ places: [], ambiguous: false });
+  });
+});
+
+describe('matchesQualifier', () => {
+  const perth = {
+    name: 'Perth',
+    latitude: 56.4,
+    longitude: -3.4,
+    region: 'Scotland',
+    country: 'United Kingdom',
+    countryCode: 'GB',
+  };
+  const springfield = {
+    name: 'Springfield',
+    latitude: 42.1,
+    longitude: -72.6,
+    region: 'Massachusetts',
+    country: 'United States',
+    countryCode: 'US',
+  };
+
+  it('accepts country codes and common aliases', () => {
+    expect(matchesQualifier(perth, 'UK')).toBe(true);
+    expect(matchesQualifier(perth, 'gb')).toBe(true);
+    expect(matchesQualifier(springfield, 'USA')).toBe(true);
+    expect(matchesQualifier(springfield, 'U.S.')).toBe(true);
+  });
+
+  it('accepts the start of the region or country name', () => {
+    expect(matchesQualifier(springfield, 'Mass.')).toBe(true);
+    expect(matchesQualifier(perth, 'scot')).toBe(true);
+    expect(matchesQualifier(perth, 'United Kingdom')).toBe(true);
+    expect(matchesQualifier(perth, 'Australia')).toBe(false);
+    expect(matchesQualifier(springfield, 'Tenessee')).toBe(false);
+    expect(matchesQualifier(perth, '')).toBe(true);
   });
 });
 

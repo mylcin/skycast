@@ -59,6 +59,21 @@ describe('WeatherService.reports', () => {
     });
   });
 
+  it('turns fractions and NaN into whole, valid numbers', async () => {
+    const weather = fakeWeather();
+    const service = createWeatherService({ weather });
+    await service.reports(
+      [istanbul],
+      { current: false, days: 2.7, hours: Number.NaN },
+      { units: 'metric' }
+    );
+    expect(weather.requests[0]?.request).toEqual({
+      current: false,
+      days: 2,
+      hours: 0,
+    });
+  });
+
   it('credits geocoding only for named places', async () => {
     const service = createWeatherService({
       weather: fakeWeather(),

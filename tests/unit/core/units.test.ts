@@ -97,6 +97,27 @@ describe('convertForecast', () => {
       windSpeed: 1,
     });
   });
+
+  it('converts the fields that are often null or zero', () => {
+    const current = forecast.current!;
+    const result = convertForecast(
+      {
+        ...forecast,
+        current: { ...current, windGusts: 32.18688, precipitation: 12.7 },
+        daily: [{ ...forecast.daily[0]!, windSpeedMax: 16.09344 }],
+        hourly: [
+          { ...forecast.hourly[0]!, temperature: 100, precipitation: 25.4 },
+        ],
+      },
+      'imperial'
+    );
+    expect(result.current).toMatchObject({ windGusts: 20, precipitation: 0.5 });
+    expect(result.daily[0]?.windSpeedMax).toBe(10);
+    expect(result.hourly[0]).toMatchObject({
+      temperature: 212,
+      precipitation: 1,
+    });
+  });
 });
 
 describe('unitsForLocale', () => {

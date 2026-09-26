@@ -8,7 +8,7 @@ import {
   TimeoutError,
   UpstreamError,
 } from '../../../src/core/errors.ts';
-import { createMemoryCache } from '../../../src/infra/cache.ts';
+import { cacheKey, createMemoryCache } from '../../../src/infra/cache.ts';
 import {
   abortableSleep,
   createHttpClient,
@@ -228,6 +228,89 @@ describe('getJson', () => {
   });
 });
 
+describe('failures while reading the body', () => {
+  /** A response whose body fails (or hangs until the request is aborted). */
+  const response = (text: (signal: AbortSignal) => Promise<string>) =>
+    ((request: Request) =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: new Headers(),
+        text: () => text(request.signal),
+      } as Response)) as unknown as typeof fetch;
+
+  const hang = (signal: AbortSignal) =>
+    new Promise<string>((_, reject) => {
+      signal.addEventListener('abort', () => {
+        reject(signal.reason as Error);
+      });
+    });
+
+  it('retries a reset connection as a network error', async () => {
+    const { instance, sleep } = client({
+      fetch: response(() => Promise.reject(new TypeError('terminated'))),
+    });
+    const error = await instance
+      .getJson(URL_, { parse })
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(NetworkError);
+    expect(sleep).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports a stalled body as a timeout', async () => {
+    const { instance } = client({
+      retries: 0,
+      fetch: response(hang),
+      timeoutSignal: () => AbortSignal.timeout(5),
+    });
+    await expect(instance.getJson(URL_, { parse })).rejects.toBeInstanceOf(
+      TimeoutError
+    );
+  });
+
+  it('cancels when the caller aborts mid-body', async () => {
+    const controller = new AbortController();
+    const { instance } = client({ fetch: response(hang) });
+    const pending = instance.getJson(URL_, {
+      parse,
+      signal: controller.signal,
+    });
+    setTimeout(() => {
+      controller.abort();
+    }, 1);
+    await expect(pending).rejects.toBeInstanceOf(CancelledError);
+  });
+
+  it('falls back to the cache when the body keeps failing', async () => {
+    const cache = createMemoryCache();
+    await cache.set(cacheKey(URL_), {
+      storedAt: new Date('2026-09-27T11:30:00Z').getTime(),
+      data: { value: 1 },
+    });
+    const { instance } = client({
+      cache,
+      fetch: response(() => Promise.reject(new TypeError('terminated'))),
+    });
+    const { freshness } = await instance.getJson(URL_, {
+      parse,
+      cache: policy,
+    });
+    expect(freshness.stale).toBe(true);
+  });
+});
+
+describe('requests that cannot be built', () => {
+  it('fail at once instead of looking like an outage', async () => {
+    const { instance, sleep } = client();
+    const error = await instance
+      .getJson(new URL('https://user:secret@api.test/v1/data'), { parse })
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(TypeError);
+    expect(error).not.toBeInstanceOf(NetworkError);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+});
+
 describe('caching', () => {
   it('serves fresh entries without a request, whatever the parameter order', async () => {
     const calls = vi.fn();
@@ -325,26 +408,46 @@ describe('caching', () => {
     });
   });
 
-  it('ignores cache entries that no longer validate', async () => {
+  it('refetches when a cache entry no longer validates', async () => {
     const cache = createMemoryCache();
     const { instance } = client({ cache });
+    let calls = 0;
     server.use(
       mock.get('https://api.test/v1/data', () =>
-        HttpResponse.json({ value: 1 })
+        HttpResponse.json({ value: ++calls })
       )
     );
     await instance.getJson(URL_, { parse, cache: policy });
-    const failing = () => {
-      throw new Error('schema changed');
+    // A newer schema that the cached { value: 1 } does not satisfy.
+    const onlyTwo = (body: unknown) => {
+      if ((body as { value: number }).value !== 2) throw new Error('old shape');
+      return body as { value: number };
     };
+    const result = await instance.getJson(URL_, {
+      parse: onlyTwo,
+      cache: policy,
+    });
+    expect(calls).toBe(2);
+    expect(result.data.value).toBe(2);
+    expect(result.freshness.cached).toBe(false);
+  });
+
+  it('treats an entry from the future as expired', async () => {
+    const cache = createMemoryCache();
+    await cache.set(cacheKey(URL_), {
+      storedAt: new Date('2026-09-28T12:00:00Z').getTime(),
+      data: { value: 1 },
+    });
     server.use(
       mock.get('https://api.test/v1/data', () =>
         HttpResponse.json({ value: 2 })
       )
     );
-    await expect(
-      instance.getJson(URL_, { parse: failing, cache: policy })
-    ).rejects.toBeInstanceOf(InvalidResponseError);
+    const { data } = await client({ cache }).instance.getJson(URL_, {
+      parse,
+      cache: policy,
+    });
+    expect(data.value).toBe(2);
   });
 
   it('keeps working when the cache cannot be written', async () => {

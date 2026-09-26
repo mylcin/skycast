@@ -16,7 +16,9 @@ import { fixture } from '../../helpers/fixtures.ts';
 import { server } from '../../helpers/msw.ts';
 
 const http = createHttpClient({ userAgent: 'test', retries: 0 });
-const { weather, geocoding } = createOpenMeteo({ http });
+// The fixtures were fetched at 00:30 in Istanbul (UTC+3).
+const now = () => new Date('2026-09-26T21:30:00Z');
+const { weather, geocoding } = createOpenMeteo({ http, now });
 const istanbul = { latitude: 41.01384, longitude: 28.94966 };
 
 describe('geocoding', () => {
@@ -106,7 +108,8 @@ describe('forecast', () => {
     expect(params!.get('longitude')).toBe('28.9497');
     expect(params!.get('timezone')).toBe('auto');
     expect(params!.get('forecast_days')).toBe('7');
-    expect(params!.get('forecast_hours')).toBe('48');
+    // One spare hour for zones where the API starts an hour early.
+    expect(params!.get('forecast_hours')).toBe('49');
     expect(params!.get('current')?.split(',')).toContain(
       'apparent_temperature'
     );
@@ -179,6 +182,63 @@ describe('forecast', () => {
       sunset: '2026-09-27T18:53',
     });
     expect(forecast?.hourly).toHaveLength(48);
+  });
+
+  it('starts at the current local hour in half-hour time zones', async () => {
+    // Delhi (UTC+5:30) at 03:15: the API answers from 02:00.
+    const body = {
+      timezone: 'Asia/Kolkata',
+      utc_offset_seconds: 19800,
+      hourly: {
+        time: [
+          '2026-09-27T02:00',
+          '2026-09-27T03:00',
+          '2026-09-27T04:00',
+          '2026-09-27T05:00',
+        ],
+        temperature_2m: [25, 26, 27, 28],
+        apparent_temperature: [25, 26, 27, 28],
+        precipitation_probability: [0, 0, 0, 0],
+        precipitation: [0, 0, 0, 0],
+        weather_code: [0, 0, 0, 0],
+        is_day: [0, 0, 0, 0],
+        wind_speed_10m: [5, 5, 5, 5],
+      },
+    };
+    server.use(mock.get(FORECAST_URL, () => HttpResponse.json(body)));
+    const delhi = createOpenMeteo({
+      http,
+      now: () => new Date('2026-09-26T21:45:00Z'),
+    });
+    const { forecasts } = await delhi.weather.forecast(
+      [{ latitude: 28.61, longitude: 77.21 }],
+      { current: false, days: 1, hours: 3 }
+    );
+    expect(forecasts[0]?.hourly.map(h => h.time.slice(11))).toEqual([
+      '03:00',
+      '04:00',
+      '05:00',
+    ]);
+  });
+
+  it('drops days that are already over in an old answer', async () => {
+    server.use(
+      mock.get(FORECAST_URL, () =>
+        HttpResponse.json(fixture('forecast-istanbul'))
+      )
+    );
+    const nextDay = createOpenMeteo({
+      http,
+      now: () => new Date('2026-09-27T21:30:00Z'),
+    });
+    const { forecasts } = await nextDay.weather.forecast([istanbul], {
+      current: true,
+      days: 7,
+      hours: 48,
+    });
+    expect(forecasts[0]?.daily[0]?.date).toBe('2026-09-28');
+    expect(forecasts[0]?.daily).toHaveLength(6);
+    expect(forecasts[0]?.hourly[0]?.time).toBe('2026-09-28T00:00');
   });
 
   it('batches several points and keeps their order', async () => {

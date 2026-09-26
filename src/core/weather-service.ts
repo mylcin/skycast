@@ -29,6 +29,18 @@ export interface WeatherServiceDeps {
   readonly geocodingAttribution?: Attribution;
 }
 
+/** A whole number within bounds; anything else becomes the fallback. */
+function whole(
+  value: number,
+  min: number,
+  max: number,
+  fallback: number
+): number {
+  return Number.isFinite(value)
+    ? Math.min(Math.max(Math.trunc(value), min), max)
+    : fallback;
+}
+
 export function createWeatherService({
   weather,
   geocodingAttribution,
@@ -42,8 +54,8 @@ export function createWeatherService({
         locations,
         {
           current: request.current,
-          days: Math.min(Math.max(request.days, 1), weather.maxDays),
-          hours: Math.min(Math.max(request.hours, 0), weather.maxHours),
+          days: whole(request.days, 1, weather.maxDays, 1),
+          hours: whole(request.hours, 0, weather.maxHours, 0),
         },
         signal
       );

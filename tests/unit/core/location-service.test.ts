@@ -76,6 +76,69 @@ describe('LocationService.resolve', () => {
     expect(result.location.countryCode).toBe('FR');
   });
 
+  it('resolves a country to its capital when the API knows it', async () => {
+    const geocoder = fakeGeocoder(query =>
+      query.countryCode === 'MX'
+        ? places('geo-mexico-mx-en')
+        : places('geo-mexico-en')
+    );
+    const result = await createLocationService(geocoder).resolve('Mexico', {
+      language: 'en',
+    });
+    expect(result.location).toMatchObject({
+      name: 'Mexico City',
+      featureCode: 'PPLC',
+    });
+    expect(geocoder.queries[1]).toMatchObject({
+      name: 'Mexico',
+      countryCode: 'MX',
+      limit: 20,
+    });
+  });
+
+  it('keeps the country when no capital shares its name', async () => {
+    const geocoder = fakeGeocoder(query =>
+      query.countryCode === 'GE'
+        ? places('geo-georgia-ge-en')
+        : places('geo-georgia-en')
+    );
+    const result = await createLocationService(geocoder).resolve('Georgia', {
+      language: 'en',
+    });
+    expect(result.location).toMatchObject({
+      name: 'Georgia',
+      featureCode: 'PCLI',
+    });
+  });
+
+  it('applies a qualifier the API could not match ("Perth, UK")', async () => {
+    const geocoder = fakeGeocoder(query =>
+      query.name === 'Perth'
+        ? places('geo-perth-en')
+        : places('geo-perth-uk-en')
+    );
+    const result = await createLocationService(geocoder).resolve('Perth, UK', {
+      language: 'en',
+    });
+    expect(result).toMatchObject({
+      how: 'only',
+      location: { region: 'Scotland' },
+    });
+  });
+
+  it('does not guess silently when nothing fits the qualifier', async () => {
+    const geocoder = fakeGeocoder(query =>
+      query.name === 'Paris' ? places('geo-paris-en') : []
+    );
+    const result = await createLocationService(geocoder).resolve(
+      'Paris, Tenessee',
+      {
+        language: 'en',
+      }
+    );
+    expect(result.how).toBe('best');
+  });
+
   it('throws LocationNotFoundError when nothing matches', async () => {
     const service = createLocationService(fakeGeocoder(() => []));
     await expect(

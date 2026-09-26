@@ -8,18 +8,24 @@ export interface OpenMeteoOptions {
   /** Point at a self-hosted Open-Meteo instance, or a test server. */
   readonly forecastUrl?: string;
   readonly geocodingUrl?: string;
+  readonly now?: () => Date;
 }
 
 export function createOpenMeteo({
   http,
   forecastUrl = FORECAST_URL,
   geocodingUrl = GEOCODING_URL,
+  now,
 }: OpenMeteoOptions): {
   weather: WeatherProvider;
   geocoding: GeocodingProvider;
 } {
   return {
-    weather: createOpenMeteoWeather({ http, url: forecastUrl }),
+    weather: createOpenMeteoWeather({
+      http,
+      url: forecastUrl,
+      ...(now && { now }),
+    }),
     geocoding: createOpenMeteoGeocoder({ http, url: geocodingUrl }),
   };
 }

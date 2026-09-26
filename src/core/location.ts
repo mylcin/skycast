@@ -1,12 +1,25 @@
 import type { Coordinates, Location } from './models.ts';
 
+/** Letters that Unicode decomposition leaves alone. */
+const FOLD: Record<string, string> = {
+  ı: 'i',
+  ł: 'l',
+  ø: 'o',
+  đ: 'd',
+  ð: 'd',
+  ß: 'ss',
+  æ: 'ae',
+  œ: 'oe',
+  þ: 'th',
+};
+
 /** Case- and accent-insensitive form used to compare place names. */
 export function normalizeName(name: string): string {
   return name
     .normalize('NFKD')
     .replace(/\p{M}/gu, '')
-    .replaceAll('ı', 'i')
     .toLowerCase()
+    .replace(/[ıłøđðßæœþ]/g, char => FOLD[char] ?? char)
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -29,6 +42,19 @@ function isPopulatedPlace(location: Location): boolean {
     !['PPLX', 'PPLH', 'PPLQ', 'PPLW', 'PPLCH'].includes(code)
   );
 }
+
+/** A country, dependency or territory ("Mexico", "Georgia"). */
+export function isCountry(location: Location): boolean {
+  const code = location.featureCode;
+  return code !== undefined && (code.startsWith('PCL') || code === 'TERR');
+}
+
+/** A state or province ("Georgia", "Texas"). */
+function isState(location: Location): boolean {
+  return location.featureCode === 'ADM1';
+}
+
+const population = (place: Location): number => place.population ?? 0;
 
 function sameLabel(a: Location, b: Location): boolean {
   return (
@@ -60,32 +86,83 @@ export function rankCandidates(
   results: readonly Location[],
   query: string
 ): Candidates {
-  const populated = results.filter(isPopulatedPlace);
-  const pool = populated.length > 0 ? populated : results;
-
   const wanted = normalizeName(splitQuery(query).name);
-  const exact = pool.filter(
-    place => place.name !== null && normalizeName(place.name) === wanted
+  const named = (place: Location): boolean =>
+    place.name !== null && normalizeName(place.name) === wanted;
+
+  // Towns, plus countries and states asked for by their own name.
+  const eligible = results.filter(
+    place =>
+      isPopulatedPlace(place) ||
+      ((isCountry(place) || isState(place)) && named(place))
   );
-  const matches = exact.length > 0 ? exact : pool;
-  const places = matches.filter(
+  const pool = eligible.length > 0 ? eligible : results;
+
+  // The provider also matches alternate names and answers in the UI
+  // language: "Praha" finds Prague. Keep that top hit when it outweighs
+  // every literal namesake, instead of a 74-person village called Praha.
+  const exact = pool.filter(named);
+  const [first] = pool;
+  const largestExact = Math.max(0, ...exact.map(population));
+  const matches =
+    exact.length === 0
+      ? pool
+      : first && !exact.includes(first) && population(first) > largestExact
+        ? [first, ...exact]
+        : exact;
+
+  const unique = matches.filter(
     (place, index) =>
       matches.findIndex(other => sameLabel(other, place)) === index
   );
+  // Places with a known population outrank those without, in provider order.
+  const places = [
+    ...unique.filter(place => population(place) > 0),
+    ...unique.filter(place => population(place) === 0),
+  ];
 
   const [best, ...rest] = places;
   if (!best) return { places: [], ambiguous: false };
 
-  const top = best.population ?? 0;
+  const top = population(best);
   if (top === 0) {
     // Without population data every match is equally plausible.
     return { places, ambiguous: rest.length > 0 };
   }
-  const known = rest.filter(place => (place.population ?? 0) > 0);
+  const known = rest.filter(place => population(place) > 0);
   const ambiguous = known.some(
-    place => (place.population ?? 0) >= top * NAMESAKE_SHARE
+    place => population(place) >= top * NAMESAKE_SHARE
   );
   return { places: [best, ...known], ambiguous };
+}
+
+const COUNTRY_ALIASES: Record<string, string> = {
+  uk: 'GB',
+  'u.k.': 'GB',
+  england: 'GB',
+  scotland: 'GB',
+  wales: 'GB',
+  usa: 'US',
+  'u.s.': 'US',
+  'u.s.a.': 'US',
+  uae: 'AE',
+};
+
+/**
+ * Whether a place fits the part after the comma: a country code or alias
+ * ("UK", "USA"), or the start of its region or country name ("Mass.").
+ */
+export function matchesQualifier(place: Location, qualifier: string): boolean {
+  const wanted = normalizeName(qualifier);
+  if (!wanted) return true;
+  const code =
+    COUNTRY_ALIASES[wanted] ??
+    (/^[a-z]{2}$/.test(wanted) ? wanted.toUpperCase() : undefined);
+  if (code !== undefined && place.countryCode === code) return true;
+  const stem = wanted.replace(/\.$/, '');
+  return [place.region, place.country].some(
+    part => part !== undefined && normalizeName(part).startsWith(stem)
+  );
 }
 
 /** Two locations closer than ~1 km are the same place. */

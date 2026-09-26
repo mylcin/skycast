@@ -137,13 +137,20 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
   async function attempt(url: URL, signal?: AbortSignal): Promise<unknown> {
     const timeout = timeoutSignal(timeoutMs);
     const started = Date.now();
+    // Built outside the try: a request that can't even be constructed (bad
+    // header, credentials in the URL) is a bug, not a network outage.
+    const request = new Request(url, {
+      headers: { accept: 'application/json', 'user-agent': userAgent },
+      signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
+    });
     let response: Response;
+    let text: string;
     try {
       const fetchImpl = options.fetch ?? globalThis.fetch;
-      response = await fetchImpl(url, {
-        headers: { accept: 'application/json', 'user-agent': userAgent },
-        signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
-      });
+      response = await fetchImpl(request);
+      // The body streams under the same signal, so it can time out, be
+      // reset or be cancelled too.
+      text = await response.text();
     } catch (error) {
       if (signal?.aborted) throw new CancelledError();
       if (timeout.aborted) {
@@ -155,7 +162,6 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
       throw error;
     }
 
-    const text = await response.text();
     log(`GET ${url.href} → ${response.status} (${Date.now() - started} ms)`);
     if (response.ok) {
       try {
@@ -227,8 +233,14 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
         }
       }
 
-      const age = cached ? now().getTime() - cached.storedAt : Infinity;
-      if (cached && policy && age < policy.ttlMs) {
+      // An entry from the future (the clock was wrong when it was written)
+      // counts as expired rather than fresh forever.
+      const age =
+        cached && Number.isFinite(cached.storedAt)
+          ? now().getTime() - cached.storedAt
+          : Infinity;
+      const usable = age >= 0;
+      if (cached && policy && usable && age < policy.ttlMs) {
         log(`cache hit (${Math.round(age / 1000)} s old): ${url.href}`);
         const fetchedAt = new Date(cached.storedAt);
         return {
@@ -250,7 +262,13 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
         }
         return { data, freshness: { fetchedAt, cached: false, stale: false } };
       } catch (error) {
-        if (cached && policy && isOutage(error) && age < policy.staleMs) {
+        if (
+          cached &&
+          policy &&
+          usable &&
+          isOutage(error) &&
+          age < policy.staleMs
+        ) {
           log(
             `request failed, using a ${Math.round(age / 60_000)} min old cache entry`
           );

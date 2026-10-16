@@ -38,6 +38,9 @@ export interface HttpClientOptions {
   /** Per attempt. */
   readonly timeoutMs?: number;
   readonly retries?: number;
+  /** Per attempt, while a stale cache entry can answer if the network fails. */
+  readonly staleTimeoutMs?: number;
+  readonly staleRetries?: number;
   readonly baseDelayMs?: number;
   /** A longer Retry-After fails fast instead of making the user wait. */
   readonly maxRetryAfterMs?: number;
@@ -108,6 +111,12 @@ function isOutage(error: unknown): boolean {
   );
 }
 
+/** A timeout for each attempt and how many times to retry. */
+interface Budget {
+  readonly timeoutMs: number;
+  readonly retries: number;
+}
+
 class RetryableError extends Error {
   readonly error: Error;
   readonly retryAfterMs: number | null;
@@ -125,6 +134,8 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
     cache = null,
     timeoutMs = 8000,
     retries = 2,
+    staleTimeoutMs = 3000,
+    staleRetries = 1,
     baseDelayMs = 300,
     maxRetryAfterMs = 5000,
     now = () => new Date(),
@@ -134,7 +145,19 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
     log = () => undefined,
   } = options;
 
-  async function attempt(url: URL, signal?: AbortSignal): Promise<unknown> {
+  const full: Budget = { timeoutMs, retries };
+  // Never longer than the full budget, so a client set up to fail fast stays
+  // fast.
+  const short: Budget = {
+    timeoutMs: Math.min(staleTimeoutMs, timeoutMs),
+    retries: Math.min(staleRetries, retries),
+  };
+
+  async function attempt(
+    url: URL,
+    timeoutMs: number,
+    signal?: AbortSignal
+  ): Promise<unknown> {
     const timeout = timeoutSignal(timeoutMs);
     const started = Date.now();
     // Built outside the try: a request that can't even be constructed (bad
@@ -185,13 +208,17 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
     throw new RetryableError(error, retryAfter);
   }
 
-  async function fetchJson(url: URL, signal?: AbortSignal): Promise<unknown> {
+  async function fetchJson(
+    url: URL,
+    budget: Budget,
+    signal?: AbortSignal
+  ): Promise<unknown> {
     for (let n = 0; ; n++) {
       try {
-        return await attempt(url, signal);
+        return await attempt(url, budget.timeoutMs, signal);
       } catch (caught) {
         if (!(caught instanceof RetryableError)) throw caught;
-        if (n >= retries) throw caught.error;
+        if (n >= budget.retries) throw caught.error;
         // Full jitter: spreads retries from many clients over the window.
         const delay =
           caught.retryAfterMs ?? Math.round(random() * baseDelayMs * 2 ** n);
@@ -249,8 +276,14 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
         };
       }
 
+      // With old data to show, a black-holed network (a captive portal,
+      // dropped packets) shouldn't keep the user waiting through every
+      // retry before they see it.
+      const fallback =
+        cached && policy && usable && age < policy.staleMs ? cached : null;
+
       try {
-        const body = await fetchJson(url, signal);
+        const body = await fetchJson(url, fallback ? short : full, signal);
         const data = validate(url, parse, body);
         const fetchedAt = now();
         if (key && cache) {
@@ -262,21 +295,15 @@ export function createHttpClient(options: HttpClientOptions): HttpClient {
         }
         return { data, freshness: { fetchedAt, cached: false, stale: false } };
       } catch (error) {
-        if (
-          cached &&
-          policy &&
-          usable &&
-          isOutage(error) &&
-          age < policy.staleMs
-        ) {
+        if (fallback && isOutage(error)) {
           log(
             `request failed, using a ${Math.round(age / 60_000)} min old cache entry`
           );
-          const fetchedAt = new Date(cached.storedAt);
+          const fetchedAt = new Date(fallback.storedAt);
           const staleBecause =
             error instanceof NetworkError ? 'offline' : 'unavailable';
           return {
-            data: cached.data,
+            data: fallback.data,
             freshness: { fetchedAt, cached: true, stale: true, staleBecause },
           };
         }

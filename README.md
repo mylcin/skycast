@@ -347,7 +347,8 @@ Some details are not obvious from the code layout:
 - **Resilience.** Each attempt has its own timeout, and connection failures
   are retried with jittered back-off. Short `Retry-After` delays are
   honoured, long ones fail fast. When the service is unreachable, cached
-  data up to a day old is shown with a notice.
+  data up to a day old is shown with a notice. With such data to fall back
+  on, attempts are shorter (3 s) and retried once, so it shows in seconds.
 - **Output.** Tables measure plain text, drop low-priority columns on
   narrow terminals and add colour last, so escape codes never shift
   columns. Every view fits terminals down to 30 columns. Colour comes from `NO_COLOR`, `FORCE_COLOR`, the TTY and the

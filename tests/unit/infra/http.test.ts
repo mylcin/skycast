@@ -471,6 +471,94 @@ describe('caching', () => {
   });
 });
 
+describe('retry budget', () => {
+  /** A network that drops packets: every attempt runs into its timeout. */
+  const blackHole = ((request: Request) =>
+    new Promise((_, reject) => {
+      const fail = () => {
+        reject(request.signal.reason as Error);
+      };
+      if (request.signal.aborted) fail();
+      else request.signal.addEventListener('abort', fail);
+    })) as unknown as typeof fetch;
+
+  /** Times every attempt out at once and records the timeout it was given. */
+  function timeouts() {
+    const given: number[] = [];
+    const timeoutSignal = (ms: number) => {
+      given.push(ms);
+      return AbortSignal.abort(new DOMException('timed out', 'TimeoutError'));
+    };
+    return { given, timeoutSignal };
+  }
+
+  async function cacheWith(storedAt: string) {
+    const cache = createMemoryCache();
+    await cache.set(cacheKey(URL_), {
+      storedAt: new Date(storedAt).getTime(),
+      data: { value: 1 },
+    });
+    return cache;
+  }
+
+  it('is short when a stale entry can stand in', async () => {
+    const { given, timeoutSignal } = timeouts();
+    const { instance, sleep } = client({
+      cache: await cacheWith('2026-09-27T11:30:00Z'),
+      fetch: blackHole,
+      timeoutSignal,
+    });
+    const { data, freshness } = await instance.getJson(URL_, {
+      parse,
+      cache: policy,
+    });
+    expect(data.value).toBe(1);
+    expect(freshness).toMatchObject({
+      cached: true,
+      stale: true,
+      staleBecause: 'offline',
+    });
+    expect(given).toEqual([3000, 3000]);
+    expect(sleep).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    ['there is no entry', null],
+    ['the entry is too old to use', '2026-09-27T10:00:00Z'],
+    ['the entry is from the future', '2026-09-28T12:00:00Z'],
+  ])('is full when %s', async (_, storedAt) => {
+    const { given, timeoutSignal } = timeouts();
+    const { instance, sleep } = client({
+      cache: storedAt ? await cacheWith(storedAt) : createMemoryCache(),
+      fetch: blackHole,
+      timeoutSignal,
+    });
+    await expect(
+      instance.getJson(URL_, { parse, cache: policy })
+    ).rejects.toBeInstanceOf(TimeoutError);
+    expect(given).toEqual([8000, 8000, 8000]);
+    expect(sleep).toHaveBeenCalledTimes(2);
+  });
+
+  it('never outlasts a shorter configured budget', async () => {
+    const { given, timeoutSignal } = timeouts();
+    const { instance, sleep } = client({
+      cache: await cacheWith('2026-09-27T11:30:00Z'),
+      fetch: blackHole,
+      timeoutSignal,
+      timeoutMs: 1000,
+      retries: 0,
+    });
+    const { freshness } = await instance.getJson(URL_, {
+      parse,
+      cache: policy,
+    });
+    expect(freshness.stale).toBe(true);
+    expect(given).toEqual([1000]);
+    expect(sleep).not.toHaveBeenCalled();
+  });
+});
+
 describe('helpers', () => {
   it('parses Retry-After seconds and dates', () => {
     const now = new Date('2026-09-27T12:00:00Z');

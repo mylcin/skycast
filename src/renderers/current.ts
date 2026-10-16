@@ -1,12 +1,7 @@
 import type { WeatherReport } from '../core/models.ts';
 import { ART_WIDTH, drawPicture, pictureFor } from './ascii-art.ts';
-import {
-  conditionGroup,
-  conditionText,
-  footer,
-  header,
-  localToday,
-} from './common.ts';
+import { renderChanges } from './changes.ts';
+import { conditionText, footer, header, localToday } from './common.ts';
 import type { RenderContext } from './context.ts';
 import {
   formatPercent,
@@ -100,7 +95,9 @@ export function renderCurrent(
   }
   details.push(...fit(extras));
 
+  const next = renderChanges(report, ctx, room);
   const today = report.daily.find(day => day.date === localToday(report));
+  if (!today) details.push(...next);
   if (today) {
     const range = [
       t.weather.todayRange(
@@ -125,7 +122,7 @@ export function renderCurrent(
         )
       );
     }
-    details.push(...fit(range));
+    details.push(...fit(range), ...next);
 
     if (today.sunrise && today.sunset) {
       details.push(
@@ -143,10 +140,7 @@ export function renderCurrent(
 
   const body = withPicture
     ? sideBySide(
-        drawPicture(
-          pictureFor(conditionGroup(current.weatherCode), current.isDay),
-          paint
-        ),
+        drawPicture(pictureFor(current.weatherCode, current.isDay), paint),
         details,
         ART_WIDTH,
         2

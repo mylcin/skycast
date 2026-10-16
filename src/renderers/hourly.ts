@@ -1,4 +1,8 @@
-import type { HourlyForecast, WeatherReport } from '../core/models.ts';
+import type {
+  HourlyForecast,
+  UnitSystem,
+  WeatherReport,
+} from '../core/models.ts';
 import { conditionText, footer, header, localToday } from './common.ts';
 import type { RenderContext } from './context.ts';
 import {
@@ -13,6 +17,27 @@ import { downsample, sparkline } from './sparkline.ts';
 import { renderTable, type Column } from './table.ts';
 import { joinFitting, padEnd, visibleWidth } from './text.ts';
 
+/**
+ * Degrees a temperature chart spans at least, centred on the data: a day
+ * between 19.1° and 19.8° stays in the middle bars instead of swinging from
+ * the lowest to the highest one. Wider ranges use the data's own.
+ */
+const MIN_SPAN: Record<UnitSystem, number> = { metric: 5, imperial: 9 };
+
+function temperatureScale(
+  values: readonly (number | null)[],
+  units: UnitSystem
+): { min?: number; max?: number } {
+  const known = values.filter((v): v is number => v !== null);
+  if (known.length === 0) return {};
+  const low = Math.min(...known);
+  const high = Math.max(...known);
+  const span = MIN_SPAN[units];
+  if (high - low >= span) return { min: low, max: high };
+  const middle = (low + high) / 2;
+  return { min: middle - span / 2, max: middle + span / 2 };
+}
+
 /** Sparklines for temperature and rain chance, with an hour axis. */
 function charts(report: WeatherReport, ctx: RenderContext): string[] {
   const { t, paint, symbols } = ctx;
@@ -24,11 +49,14 @@ function charts(report: WeatherReport, ctx: RenderContext): string[] {
   const known = hours
     .map(h => h.temperature)
     .filter((v): v is number => v !== null);
-  const low = formatTemperature(Math.min(...known), units, symbols);
-  const high = formatTemperature(Math.max(...known), units, symbols);
+  // The API may send no temperatures at all for a window: say nothing.
+  const range =
+    known.length > 0
+      ? `${formatTemperature(Math.min(...known), units, symbols)} ${symbols.dash} ${formatTemperature(Math.max(...known), units, symbols)}`
+      : symbols.dash;
   const peak = Math.max(0, ...hours.map(h => h.precipitationProbability ?? 0));
   const suffixes = [
-    `${low} ${symbols.dash} ${high}`,
+    range,
     peak > 0 ? t.hourly.rainPeak(formatPercent(peak, t)) : t.hourly.dry,
   ];
   // The summaries sit right of the charts, or below them when that leaves
@@ -68,7 +96,10 @@ function charts(report: WeatherReport, ctx: RenderContext): string[] {
 
   const tempLine = draw(
     temps,
-    sparkline(temps, { levels: symbols.spark }),
+    sparkline(temps, {
+      levels: symbols.spark,
+      ...temperatureScale(temps, units),
+    }),
     (v, text) => paint.temperature(v, units, text)
   );
   const rainLine = draw(

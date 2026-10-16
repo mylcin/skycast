@@ -17,12 +17,27 @@ const location = z.object({
   id: z.number().optional(),
 });
 
-/** config.json fields. Unknown keys are ignored, so older versions can read newer files. */
+/**
+ * config.json fields. Unknown keys are ignored when reading and kept when
+ * writing, so an older version can use a newer file without erasing it.
+ */
 const fields = {
   city: location,
   units: z.enum(['metric', 'imperial']),
   lang: z.enum(['en', 'tr']),
 } as const;
+
+const KNOWN_KEYS = new Set(['version', 'favorites', ...Object.keys(fields)]);
+
+/** The keys of a file that belong to a newer version, untouched. */
+function unknownKeys(body: unknown): Record<string, unknown> {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(body).filter(([key]) => !KNOWN_KEYS.has(key))
+  );
+}
 
 export interface Config {
   readonly city?: Location;
@@ -59,7 +74,10 @@ export interface ConfigStore {
   load(): Promise<Config>;
   /** Everything that still validates, for commands that repair the file. */
   salvage(): Promise<Salvaged>;
-  /** Changes the config under a lock, starting from what is on disk now. */
+  /**
+   * Changes the config under a lock, starting from what is on disk now.
+   * Keys from newer versions are written back as they were.
+   */
   update(change: (config: Config) => Config): Promise<Config>;
   /** Clears the settings but keeps favourites; a file that isn't JSON is backed up. */
   reset(): Promise<ResetResult>;
@@ -140,10 +158,14 @@ export function createConfigStore(path: string): ConfigStore {
     };
   }
 
-  const save = (config: Config): Promise<void> =>
+  /** `kept` holds keys this version doesn't know; they never clash with ours. */
+  const save = (
+    config: Config,
+    kept: Record<string, unknown> = {}
+  ): Promise<void> =>
     writeFileAtomic(
       path,
-      `${JSON.stringify({ version: 1, ...config }, null, 2)}\n`
+      `${JSON.stringify({ version: 1, ...config, ...kept }, null, 2)}\n`
     );
 
   return {
@@ -156,8 +178,9 @@ export function createConfigStore(path: string): ConfigStore {
     },
     update(change) {
       return withFileLock(path, async () => {
-        const next = change(parse(await read(), false).config);
-        await save(next);
+        const body = await read();
+        const next = change(parse(body, false).config);
+        await save(next, unknownKeys(body));
         return next;
       });
     },

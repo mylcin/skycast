@@ -28,6 +28,7 @@ need Node 22.
 | `npm run build`          | Bundle to `dist/` and check the package with publint      |
 | `npm run test:e2e`       | Run the built bundle as a real process (build first)      |
 | `npm run screenshots`    | Regenerate the SVG screenshots in `docs/`                 |
+| `npm run art`            | Draw every weather picture, by day and by night           |
 | `npm run fixtures:serve` | Start the local fixture server (see below)                |
 
 ## Layout
@@ -73,6 +74,12 @@ linter stops you, the code probably belongs in another layer.
   read the diff before committing.
 - **Layout tests** check that no line is wider than the terminal. Keep them
   passing when you add columns.
+- **Pictures** follow the rules at the top of
+  `src/renderers/ascii-art.ts`: one shared cloud, precipitation centred
+  under it, and a glyph of its own for each kind of weather so a picture
+  reads without colour. `tests/unit/renderers/ascii-art.test.ts` checks
+  them. Review a change with `npm run art` (`npm run art -- 0` for no
+  colour), then regenerate the screenshots.
 
 ## Changing user-facing text
 

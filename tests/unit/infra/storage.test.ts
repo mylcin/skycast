@@ -145,6 +145,40 @@ describe('config store', () => {
     expect(await createConfigStore(path).load()).toEqual({ favorites: [] });
   });
 
+  it('keeps keys from newer versions when it writes', async () => {
+    const path = file();
+    const newer = { theme: 'dawn', status: { format: '{temp}' } };
+    writeFileSync(
+      path,
+      JSON.stringify({ version: 1, units: 'imperial', favorites: [], ...newer })
+    );
+    const store = createConfigStore(path);
+    await store.update(config => ({ ...config, lang: 'tr' }));
+    await store.update(config => ({ favorites: config.favorites }));
+    await store.update(config => ({
+      ...config,
+      favorites: [...config.favorites, paris],
+    }));
+    expect(JSON.parse(readFileSync(path, 'utf8'))).toEqual({
+      version: 1,
+      favorites: [paris],
+      ...newer,
+    });
+  });
+
+  it('clears keys from newer versions on reset, like every setting', async () => {
+    const path = file();
+    writeFileSync(
+      path,
+      JSON.stringify({ version: 1, favorites: [paris], theme: 'dawn' })
+    );
+    await createConfigStore(path).reset();
+    expect(JSON.parse(readFileSync(path, 'utf8'))).toEqual({
+      version: 1,
+      favorites: [paris],
+    });
+  });
+
   it('explains what is wrong with a broken file', async () => {
     const path = file();
     writeFileSync(path, '{ "units": ');

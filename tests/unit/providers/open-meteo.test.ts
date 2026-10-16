@@ -115,8 +115,8 @@ describe('forecast', () => {
       'apparent_temperature'
     );
     expect(params!.get('daily')?.split(',')).toContain('sunrise');
-    expect(params!.get('hourly')?.split(',')).toContain(
-      'precipitation_probability'
+    expect(params!.get('hourly')?.split(',')).toEqual(
+      expect.arrayContaining(['precipitation_probability', 'wind_gusts_10m'])
     );
   });
 
@@ -219,6 +219,12 @@ describe('forecast', () => {
       '03:00',
       '04:00',
       '05:00',
+    ]);
+    // An answer without gusts still parses; they are just unknown.
+    expect(forecasts[0]?.hourly.map(h => h.windGusts)).toEqual([
+      null,
+      null,
+      null,
     ]);
   });
 

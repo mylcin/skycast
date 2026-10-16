@@ -57,4 +57,27 @@ describe('createPaint', () => {
     expect(paint.rain(10, 'x')).toBe(paint.dim('x'));
     expect(paint.rain(70, 'x')).not.toBe(paint.rain(40, 'x'));
   });
+
+  it('keeps every picture colour visible and apart at 16 and 256 colours', () => {
+    const roles = [
+      'sun',
+      'moon',
+      'star',
+      'cloud',
+      'cloudDark',
+      'rain',
+      'snow',
+      'bolt',
+      'fog',
+    ] as const;
+    const sgr = (level: 1 | 2, role: (typeof roles)[number]) =>
+      /\[([\d;]+)m/.exec(createPaint(level).art(role, 'x'))?.[1];
+    for (const role of roles) {
+      // 30 is black: invisible on a dark terminal.
+      expect(sgr(1, role), role).not.toBe('30');
+    }
+    // The distant cloud is never mistaken for rain, and adds depth at 256.
+    expect(sgr(1, 'cloudDark')).not.toBe(sgr(1, 'rain'));
+    expect(sgr(2, 'cloudDark')).not.toBe(sgr(2, 'cloud'));
+  });
 });

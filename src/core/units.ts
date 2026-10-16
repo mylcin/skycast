@@ -80,6 +80,7 @@ export function convertForecast(
       feelsLike: maybe(hour.feelsLike, t),
       precipitation: maybe(hour.precipitation, p),
       windSpeed: maybe(hour.windSpeed, s),
+      windGusts: maybe(hour.windGusts, s),
     })),
   };
 }

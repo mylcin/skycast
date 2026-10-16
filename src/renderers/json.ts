@@ -1,8 +1,11 @@
+import { nextChanges } from '../core/changes.ts';
 import { conditionGroup } from '../core/conditions.ts';
 import type { Location, WeatherReport } from '../core/models.ts';
 import { UNIT_LABELS } from '../core/units.ts';
 import type { Messages } from '../i18n/index.ts';
+import { describeChange } from './changes.ts';
 import { conditionText } from './common.ts';
+import { getSymbols } from './symbols.ts';
 
 /**
  * The `--json` contract. Bump the version on breaking changes; adding fields
@@ -83,17 +86,49 @@ export function reportJson(
       ...condition(hour.weatherCode, t),
       isDay: hour.isDay,
       windSpeed: hour.windSpeed,
+      windGusts: hour.windGusts,
     })),
     meta: {
       fetchedAt: report.freshness.fetchedAt.toISOString(),
       cached: report.freshness.cached,
       stale: report.freshness.stale,
+      // "offline" or "unavailable"; left out for fresh data.
+      staleBecause: report.freshness.staleBecause,
     },
     attribution: report.attribution.map(a => ({
       text: a.text,
       url: a.url,
       license: a.license,
     })),
+  };
+}
+
+/**
+ * What changes next (see core/changes.ts), each with its sentence in the
+ * UI language, for status bars and notifications.
+ */
+export function changesJson(report: WeatherReport, t: Messages): Json[] {
+  const symbols = getSymbols(true);
+  return nextChanges(report, report.units).map(change => ({
+    ...change,
+    description: describeChange(change, report, t, symbols),
+  }));
+}
+
+/**
+ * `now` as JSON: the report as it always was, today without hours, plus
+ * the `changes` that the extra hours and day were fetched for.
+ */
+export function nowJson(
+  report: WeatherReport,
+  t: Messages
+): { [key: string]: Json | undefined } {
+  return {
+    ...reportJson(
+      { ...report, daily: report.daily.slice(0, 1), hourly: [] },
+      t
+    ),
+    changes: changesJson(report, t),
   };
 }
 

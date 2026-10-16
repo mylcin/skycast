@@ -96,6 +96,7 @@ function toHourly(
     weatherCode: hourly.weather_code[i] ?? null,
     isDay: hourly.is_day[i] === 1,
     windSpeed: hourly.wind_speed_10m[i] ?? null,
+    windGusts: hourly.wind_gusts_10m?.[i] ?? null,
   }));
 }
 

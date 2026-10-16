@@ -70,6 +70,9 @@ const hourly = z.object({
   weather_code: series,
   is_day: series,
   wind_speed_10m: series,
+  // Optional so a self-hosted server or an older saved answer without it
+  // still parses; gusts are then unknown.
+  wind_gusts_10m: series.optional(),
 });
 
 const forecast = z.object({

@@ -1,3 +1,4 @@
+import { WINDOW_HOURS } from '../../core/changes.ts';
 import { CancelledError, UsageError } from '../../core/errors.ts';
 import type { Freshness, Location, WeatherReport } from '../../core/models.ts';
 import type { ForecastRequest } from '../../providers/types.ts';
@@ -8,7 +9,7 @@ import {
 } from '../../renderers/current.ts';
 import { renderForecast } from '../../renderers/forecast.ts';
 import { renderHourly } from '../../renderers/hourly.ts';
-import { renderJson, reportJson } from '../../renderers/json.ts';
+import { nowJson, renderJson, reportJson } from '../../renderers/json.ts';
 import { describeError, type Failure } from '../errors.ts';
 import { locate, resolvePlace, type PlaceInput } from '../locate.ts';
 import type { Session } from '../session.ts';
@@ -68,13 +69,14 @@ export async function now(
   fallback?: Fallback
 ): Promise<void> {
   const location = await locate(session, input, fallback);
+  // The current hour, the next ones and tomorrow, for what changes next.
   const [report] = await fetchReports(session, [location], {
     current: true,
-    days: 1,
-    hours: 0,
+    days: 2,
+    hours: WINDOW_HOURS + 1,
   });
   if (!report) return;
-  if (session.json) session.out(renderJson(reportJson(report, session.t)));
+  if (session.json) session.out(renderJson(nowJson(report, session.t)));
   else if (session.compact)
     session.out(renderCurrentCompact(report, session.render));
   else session.out(renderCurrent(report, session.render));

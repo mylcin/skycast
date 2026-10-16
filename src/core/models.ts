@@ -84,6 +84,7 @@ export interface HourlyForecast {
   readonly weatherCode: number | null;
   readonly isDay: boolean;
   readonly windSpeed: number | null;
+  readonly windGusts: number | null;
 }
 
 /** What a weather provider returns for one point. */

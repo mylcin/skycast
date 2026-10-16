@@ -21,6 +21,10 @@ API key.
 - **Now, daily and hourly.** An ASCII picture of the sky, temperatures on a
   colour scale, wind arrows, UV, sunrise and sunset. Up to 16 days and 168
   hours, with range bars and sparklines.
+- **What changes next.** `now` adds one line when the next 12 hours or
+  tomorrow bring a change: rain or snow starting or easing, strong gusts, a
+  much warmer or colder day. Fixed thresholds, and the forecast's own
+  probability, so it never sounds surer than the data.
 - **Compare places.** One row per place, all fetched in a single request.
 - **Made for terminals and scripts.** Adapts to narrow windows, turns colour
   off for pipes and `NO_COLOR`, prints versioned JSON with `--json`, returns
@@ -249,7 +253,8 @@ and the time zone are American, because many people elsewhere keep an
       "url": "https://www.geonames.org/",
       "license": "CC BY 4.0"
     }
-  ]
+  ],
+  "changes": []
 }
 ```
 
@@ -265,6 +270,12 @@ and the time zone are American, because many people elsewhere keep an
   or `automatic`), and `fav list` prints the saved places. Commands that
   change something (`config set`, `fav add`, `cache clear`…) print what
   changed.
+- `now` also prints `changes`, the line under today's range as data: a
+  `kind` (`precipitation-starts`, `precipitation-eases`, `gusts` or
+  `temperature`), its time or date and numbers, and a `description` in
+  `--lang`. It is empty when nothing crosses a threshold.
+- `meta.stale` is `true` when skycast shows cached data because a request
+  failed, and `meta.staleBecause` says why: `offline` or `unavailable`.
 - `schemaVersion` changes only for breaking changes. New fields may appear.
 
 ```sh
@@ -342,6 +353,12 @@ Some details are not obvious from the code layout:
   about Texas, while "Eskişehir" does not ask about a village of 82 people.
   Names are compared without case or accents, with extra folding for
   letters like ł, ß and ı.
+- **What changes next.** An hour is wet from a 50% chance and 0.2 mm, and
+  rain is easing after two hours under both 50% and 0.1 mm, so a single
+  dry hour is a lull, not the end. Gusts count from 50 km/h, and only if
+  they aren't blowing already. Tomorrow counts when its high is at least
+  5° above or below today's. The line shows the changes that fit, rain
+  first.
 - **Time.** API times are wall-clock strings at the place and are never
   parsed with `new Date()`. Output is the same in every time zone.
 - **Resilience.** Each attempt has its own timeout, and connection failures

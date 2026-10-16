@@ -5,7 +5,15 @@ import type { UnitSystem } from '../core/models.ts';
 export type ColorLevel = 0 | 1 | 2 | 3;
 
 export type ArtRole =
-  'sun' | 'moon' | 'star' | 'cloud' | 'rain' | 'snow' | 'bolt' | 'fog';
+  | 'sun'
+  | 'moon'
+  | 'star'
+  | 'cloud'
+  | 'cloudDark'
+  | 'rain'
+  | 'snow'
+  | 'bolt'
+  | 'fog';
 
 export type UvLevel = 'low' | 'moderate' | 'high' | 'veryHigh' | 'extreme';
 
@@ -27,6 +35,9 @@ const ART: Record<ArtRole, Rgb> = {
   moon: [215, 215, 230],
   star: [140, 140, 160],
   cloud: [160, 168, 178],
+  // The bank behind, in overcast skies. A neutral grey: it stays a grey
+  // at 256 colours and white at 16, where bluer greys turn blue or black.
+  cloudDark: [128, 128, 128],
   rain: [80, 160, 255],
   snow: [210, 235, 255],
   bolt: [255, 215, 80],

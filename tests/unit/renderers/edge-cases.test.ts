@@ -52,6 +52,22 @@ async function harsh(): Promise<WeatherReport> {
   };
 }
 
+/** Rain easing after a storm, gusts and a warmer tomorrow: a full change line. */
+function changing(report: WeatherReport): WeatherReport {
+  return {
+    ...report,
+    hourly: report.hourly.map((hour, i) => ({
+      ...hour,
+      precipitationProbability: i < 4 ? 100 : 0,
+      precipitation: i < 4 ? 5 : 0,
+      windGusts: i > 5 ? 120 : 10,
+    })),
+    daily: report.daily.map((day, i) =>
+      i === 1 ? { ...day, temperatureMax: day.temperatureMax + 20 } : day
+    ),
+  };
+}
+
 describe('layout with harsh data', () => {
   it.each([30, 31, 35, 40, 48, 56, 64, 80, 120, 160])(
     'fits %i columns',
@@ -62,6 +78,7 @@ describe('layout with harsh data', () => {
           const ctx = context({ width, lang, unicode, color: 3 });
           for (const output of [
             renderCurrent(report, ctx),
+            renderCurrent(changing(report), ctx),
             renderCurrentCompact(report, ctx),
             renderForecast(report, ctx),
             renderHourly(report, ctx),
@@ -149,6 +166,51 @@ describe('hourly', () => {
     expect(
       renderHourly({ ...report, hourly: report.hourly.slice(0, 1) }, context())
     ).toContain('Next hour');
+  });
+
+  it('prints a dash, not Infinity, when no temperature is known', async () => {
+    const report = await istanbulReport();
+    const output = renderHourly(
+      {
+        ...report,
+        hourly: report.hourly
+          .slice(0, 6)
+          .map(hour => ({ ...hour, temperature: null })),
+      },
+      context()
+    );
+    expect(output).not.toContain('Infinity');
+    expect(output).toMatch(/^Temp\s+–$/m);
+  });
+
+  describe('temperature chart scale', () => {
+    const chart = async (temperatures: number[]) => {
+      const report = await istanbulReport();
+      const output = renderHourly(
+        {
+          ...report,
+          hourly: temperatures.map((temperature, i) => ({
+            ...report.hourly[i]!,
+            temperature,
+          })),
+        },
+        context({ width: 100 })
+      );
+      const line = /^Temp\s+(\S+)/m.exec(output)?.[1] ?? '';
+      return new Set(line);
+    };
+
+    it('keeps a day that barely changes in the middle bars', async () => {
+      const bars = await chart([19.1, 19.4, 19.8, 19.6, 19.2, 19.1]);
+      expect(bars.has('▁')).toBe(false);
+      expect(bars.has('█')).toBe(false);
+    });
+
+    it('uses the full height for a real swing', async () => {
+      const bars = await chart([4, 8, 12, 16, 20, 14]);
+      expect(bars.has('▁')).toBe(true);
+      expect(bars.has('█')).toBe(true);
+    });
   });
 
   it('explains a forecast with no days left', async () => {

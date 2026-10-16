@@ -106,6 +106,14 @@ describe('built CLI', () => {
     expect(json.daily.length).toBeGreaterThan(0);
   });
 
+  it('prints what changes next with now --json', async () => {
+    const { code, stdout } = await skycast(['now', 'Istanbul', '--json']);
+    expect(code).toBe(0);
+    const json = JSON.parse(stdout) as { changes: unknown; hourly: unknown };
+    expect(Array.isArray(json.changes)).toBe(true);
+    expect(json.hourly).toEqual([]);
+  });
+
   it('compares places', async () => {
     const { code, stdout } = await skycast([
       'compare',

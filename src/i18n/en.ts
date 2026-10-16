@@ -89,6 +89,23 @@ export const en: Messages = {
     noData: 'No data for this period yet.',
   },
 
+  changes: {
+    precipitation: {
+      rain: 'Rain',
+      snow: 'Snow',
+      storm: 'Thunderstorms',
+      freezing: 'Freezing rain',
+    },
+    likely: (what, when, probability) =>
+      `${what} likely from ${when} (${probability})`,
+    easing: (what, when, probability) =>
+      `${what} easing from ${when} (${probability})`,
+    gusts: (speed, when) => `Gusts up to ${speed} from ${when}`,
+    warmer: (high, difference) => `Warmer tomorrow: ${high} (${difference})`,
+    colder: (high, difference) => `Colder tomorrow: ${high} (${difference})`,
+    tomorrowAt: time => `${time} tomorrow`,
+  },
+
   forecast: {
     title: days => (days === 1 ? 'Today' : `${days}-day forecast`),
     day: 'Day',

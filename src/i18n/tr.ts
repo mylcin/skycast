@@ -1,5 +1,9 @@
 import type { Messages } from './types.ts';
 
+/** Turkish capital letters, for a sentence that starts with a variable. */
+const sentence = (text: string): string =>
+  text.charAt(0).toLocaleUpperCase('tr') + text.slice(1);
+
 export const tr: Messages = {
   lang: 'tr',
   locale: 'tr',
@@ -87,6 +91,24 @@ export const tr: Messages = {
     todayRange: (low, high) => `Bugün ${low} ile ${high} arası`,
     chanceOfRain: value => `yağış ${value}`,
     noData: 'Bu dönem için henüz veri yok.',
+  },
+
+  changes: {
+    precipitation: {
+      rain: 'yağmur',
+      snow: 'kar',
+      storm: 'gök gürültülü sağanak',
+      freezing: 'donan yağmur',
+    },
+    likely: (what, when, probability) =>
+      `${sentence(when)} itibarıyla ${what} olası (${probability})`,
+    easing: (what, when, probability) =>
+      `${sentence(when)} itibarıyla ${what} azalıyor (${probability})`,
+    gusts: (speed, when) =>
+      `${sentence(when)} itibarıyla kuvvetli hamleler, en çok ${speed}`,
+    warmer: (high, difference) => `Yarın daha sıcak: ${high} (${difference})`,
+    colder: (high, difference) => `Yarın daha soğuk: ${high} (${difference})`,
+    tomorrowAt: time => `yarın ${time}`,
   },
 
   forecast: {

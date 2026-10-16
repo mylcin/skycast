@@ -49,6 +49,7 @@
     "release": "npm run build && changeset publish",
     "prepack": "tsdown",
     "prepare": "lefthook install",
+    "art": "node scripts/art.ts",
     "screenshots": "node scripts/screenshot.ts",
     "fixtures:serve": "node scripts/fixture-server.ts"
   },

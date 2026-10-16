@@ -67,6 +67,7 @@ describe('convertForecast', () => {
         weatherCode: 0,
         isDay: true,
         windSpeed: 1.609344,
+        windGusts: 16.09344,
       },
     ],
   };
@@ -95,6 +96,7 @@ describe('convertForecast', () => {
       temperature: null,
       feelsLike: 32,
       windSpeed: 1,
+      windGusts: 10,
     });
   });
 

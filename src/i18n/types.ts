@@ -1,4 +1,5 @@
 import type { WmoCode } from '../core/conditions.ts';
+import type { Precipitation } from '../core/changes.ts';
 
 export type Lang = 'en' | 'tr';
 export const LANGS: readonly Lang[] = ['en', 'tr'];
@@ -57,6 +58,19 @@ export interface Messages {
     todayRange(low: string, high: string): string;
     readonly noData: string;
     chanceOfRain(value: string): string;
+  };
+
+  /** What changes next, one sentence each (see core/changes.ts). */
+  readonly changes: {
+    /** The subject of the sentences below. */
+    readonly precipitation: Readonly<Record<Precipitation, string>>;
+    likely(what: string, when: string, probability: string): string;
+    easing(what: string, when: string, probability: string): string;
+    gusts(speed: string, when: string): string;
+    warmer(high: string, difference: string): string;
+    colder(high: string, difference: string): string;
+    /** A time on the next day: "03:00 tomorrow". */
+    tomorrowAt(time: string): string;
   };
 
   readonly forecast: {

@@ -7,6 +7,7 @@ import { http as mock, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 import { FORECAST_URL } from '../../src/providers/open-meteo/index.ts';
 import { mockApi } from '../helpers/api.ts';
+import { fixture } from '../helpers/fixtures.ts';
 import { runCli } from '../helpers/cli.ts';
 import { server } from '../helpers/msw.ts';
 
@@ -56,6 +57,54 @@ describe('weather commands', () => {
       temperature: 19.4,
       condition: 'cloudy',
     });
+    // The hours fetched for `changes` stay out: today only, as always.
+    expect(json).toMatchObject({ hourly: [], changes: [] });
+    expect((json as unknown as { daily: unknown[] }).daily).toHaveLength(1);
+  });
+
+  it('now: asks for the next twelve hours and tomorrow', async () => {
+    const log = mockApi();
+    await runCli(['now', 'Istanbul']);
+    const params = log.forecast[0];
+    // One spare hour and day each, as for the other commands.
+    expect(params?.get('forecast_hours')).toBe('14');
+    expect(params?.get('forecast_days')).toBe('3');
+    expect(params?.get('hourly')?.split(',')).toContain('wind_gusts_10m');
+  });
+
+  it('now: says what changes next, in text and JSON', async () => {
+    mockApi();
+    // The saved Istanbul answer, with rain likely from 05:00.
+    const body = fixture('forecast-istanbul') as {
+      hourly: Record<string, (number | null)[]>;
+    };
+    const hourly = body.hourly;
+    for (let i = 5; i < 9; i++) {
+      hourly.precipitation_probability![i] = 70;
+      hourly.precipitation![i] = 1.2;
+      hourly.weather_code![i] = 61;
+    }
+    server.use(mock.get(FORECAST_URL, () => HttpResponse.json(body)));
+
+    const text = await runCli(['now', 'Istanbul']);
+    expect(text.stdout).toContain('Rain likely from 05:00 (70%)');
+
+    const json = JSON.parse(
+      (await runCli(['now', 'Istanbul', '--json', '--lang', 'tr'])).stdout
+    ) as { changes: unknown[] };
+    expect(json.changes).toEqual([
+      {
+        kind: 'precipitation-starts',
+        time: '2026-09-27T05:00',
+        precipitation: 'rain',
+        probability: 70,
+        description: '05:00 itibarıyla yağmur olası (%70)',
+      },
+    ]);
+
+    // Compact output stays one line.
+    const compact = await runCli(['now', 'Istanbul', '--compact']);
+    expect(compact.stdout.split('\n')).toHaveLength(2);
   });
 
   it('--compact prints one line', async () => {

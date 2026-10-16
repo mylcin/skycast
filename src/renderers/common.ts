@@ -1,4 +1,4 @@
-import { conditionGroup, isWmoCode } from '../core/conditions.ts';
+import { isWmoCode } from '../core/conditions.ts';
 import type { Attribution, WeatherReport } from '../core/models.ts';
 import type { Messages } from '../i18n/index.ts';
 import type { RenderContext } from './context.ts';
@@ -11,8 +11,6 @@ export function conditionText(code: number | null, t: Messages): string {
     ? t.conditions[code]
     : t.unknownCondition;
 }
-
-export { conditionGroup };
 
 /**
  * The location's "today". The data's own clock (`current.time`) can lag

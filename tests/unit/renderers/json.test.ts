@@ -57,6 +57,26 @@ describe('JSON output', () => {
     expect(json.location.name).toBe('İstanbul');
   });
 
+  it('says why data is stale', async () => {
+    const report = await istanbulReport();
+    const json = reportJson(
+      {
+        ...report,
+        freshness: {
+          ...report.freshness,
+          cached: true,
+          stale: true,
+          staleBecause: 'unavailable',
+        },
+      },
+      en
+    ) as { meta: Record<string, unknown> };
+    expect(json.meta).toMatchObject({
+      stale: true,
+      staleBecause: 'unavailable',
+    });
+  });
+
   it('leaves out unknown fields and keeps nulls', async () => {
     const report = await istanbulReport();
     const text = renderJson(

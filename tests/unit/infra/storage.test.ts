@@ -9,7 +9,7 @@ import {
   utimesSync,
   writeFileSync,
 } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ConfigError, StorageError } from '../../../src/core/errors.ts';
 import { createConfigStore } from '../../../src/infra/config-store.ts';
@@ -203,6 +203,28 @@ describe('config store', () => {
       )
     );
     expect((await store.load()).favorites).toHaveLength(8);
+  });
+
+  it('takes over a lock left by a crash without letting two writers in', async () => {
+    const store = createConfigStore(file());
+    const lock = `${store.path}.lock`;
+    writeFileSync(lock, '');
+    const aMinuteAgo = new Date(Date.now() - 60_000);
+    utimesSync(lock, aMinuteAgo, aMinuteAgo);
+    const places = Array.from({ length: 8 }, (_, i) => ({
+      ...paris,
+      latitude: i,
+    }));
+    await Promise.all(
+      places.map(place =>
+        createConfigStore(store.path).update(config => ({
+          ...config,
+          favorites: [...config.favorites, place],
+        }))
+      )
+    );
+    expect((await store.load()).favorites).toHaveLength(8);
+    expect(readdirSync(dirname(store.path))).toEqual(['config.json']);
   });
 
   it('resets settings but keeps favourites', async () => {

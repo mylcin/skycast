@@ -121,7 +121,8 @@ Releases are automated with [Changesets](https://github.com/changesets/changeset
 
 1. When pull requests with changesets land on `main`, the Release workflow
    opens or updates a "chore: version packages" pull request. It bumps the
-   version and updates `CHANGELOG.md`.
+   version in `package.json` and `package-lock.json` and updates
+   `CHANGELOG.md` (`npm run version-packages`).
 2. Merging that pull request publishes to npm from GitHub Actions, through
    npm trusted publishing. No npm token is stored, and each release gets a
    provenance statement.

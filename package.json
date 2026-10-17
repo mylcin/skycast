@@ -46,6 +46,7 @@
     "coverage": "vitest run --project unit --coverage",
     "check": "npm run lint && npm run typecheck && npm run format:check && npm test",
     "changeset": "changeset",
+    "version-packages": "changeset version && npm install --package-lock-only --ignore-scripts",
     "release": "npm run build && changeset publish",
     "prepack": "tsdown",
     "prepare": "lefthook install",

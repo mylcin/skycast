@@ -67,6 +67,40 @@ const LOCK_WAIT_MS = 3000;
 /** A lock older than this was left by a process that died. */
 const STALE_LOCK_MS = 10_000;
 
+async function isStale(path: string): Promise<boolean> {
+  const info = await stat(path).catch(() => null);
+  return info !== null && Date.now() - info.mtimeMs > STALE_LOCK_MS;
+}
+
+/**
+ * Removes a lock left by a process that died. Two waiters can find the same
+ * lock stale, and the slower may act only after the faster has taken over
+ * and locked again, so the lock is checked again and removed while holding
+ * `<lock>.takeover`: one waiter at a time, and never once it is live.
+ * False while another waiter is taking over.
+ */
+async function removeStaleLock(lock: string): Promise<boolean> {
+  const takeover = `${lock}.takeover`;
+  try {
+    await (await open(takeover, 'wx')).close();
+  } catch (error) {
+    if (errorCode(error) !== 'EEXIST') {
+      throw new StorageError(takeover, errorCode(error) ?? 'EIO', {
+        cause: error,
+      });
+    }
+    // Left by a waiter that died while taking over.
+    if (await isStale(takeover)) await rm(takeover, { force: true });
+    return false;
+  }
+  try {
+    if (await isStale(lock)) await rm(lock, { force: true });
+  } finally {
+    await rm(takeover, { force: true });
+  }
+  return true;
+}
+
 /**
  * Runs `task` while holding `<file>.lock`, so two skycast processes
  * changing settings at the same time can't overwrite each other.
@@ -92,11 +126,7 @@ export async function withFileLock<T>(
           cause: error,
         });
       }
-      const info = await stat(lock).catch(() => null);
-      if (info && Date.now() - info.mtimeMs > STALE_LOCK_MS) {
-        await rm(lock, { force: true });
-        continue;
-      }
+      if ((await isStale(lock)) && (await removeStaleLock(lock))) continue;
       if (Date.now() > deadline) throw new StorageError(file, 'EBUSY');
       await new Promise(resolve =>
         setTimeout(resolve, Math.min(100, 15 + attempt * 10))
